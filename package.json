@@ -16,10 +16,16 @@
         "vue-template-compiler": "^2.7.16"
     },
     "dependencies": {
+        "@fortawesome/fontawesome-free": "^6.7.2",
+        "@fullcalendar/interaction": "^4.4.2",
+        "@fullcalendar/list": "^4.4.2",
+        "@fullcalendar/timegrid": "^4.4.2",
+        "@fullcalendar/vue": "^4.4.2",
         "@inertiajs/inertia": "^0.11.1",
         "@inertiajs/inertia-vue": "^0.8.0",
         "bootstrap": "^5.3.5",
         "sweetalert2": "^11.19.1",
-        "vue": "^2.7.16"
+        "vue": "^2.7.16",
+        "vuex": "^3.6.2"
     }
 }
