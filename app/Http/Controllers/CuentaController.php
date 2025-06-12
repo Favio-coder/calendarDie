@@ -44,6 +44,61 @@ class CuentaController extends Controller
         }
     }
 
+    public function devusuarios(Request $request)
+    {
+        try {
+            $data = DB::select('
+                    SELECT 
+                        u.l_nombre, 
+                        u.l_apellido, 
+                        u.c_rol, 
+                        u.f_nacimiento, 
+                        u.l_correoElectronico, 
+                        u.l_fotoPerfil,
+                        mi.c_mentorCreador, 
+                        mi.l_descripcion,
+                        mi.l_linkedin,
+                        NULL AS c_estudiante,
+                        NULL AS c_carrera,
+                        NULL AS c_facultad
+                    FROM usuario AS u
+                    INNER JOIN MentorInvitado AS mi ON u.c_usuario = mi.c_usuario
+                    WHERE mi.c_mentorCreador =:id_mentorCreador
+
+                    UNION ALL
+
+                    SELECT 
+                        u.l_nombre, 
+                        u.l_apellido, 
+                        u.c_rol, 
+                        u.f_nacimiento, 
+                        u.l_correoElectronico, 
+                        u.l_fotoPerfil,
+                        NULL AS c_mentorCreador, 
+                        NULL AS l_descripcion,
+                        NULL AS l_linkedin,
+                        e.c_estudiante, 
+                        e.c_carrera,
+                        c.c_facultad
+                    FROM usuario AS u
+                    INNER JOIN Estudiante AS e ON u.c_usuario = e.c_usuario
+                    INNER JOIN Carrera AS c ON e.c_carrera = c.c_carrera', ["id_mentorCreador" => $request->c_usuario]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Éxito',
+                'usuarios' => $data
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => true,
+                'mensaje' => 'Error al obtener usuarios',
+                'detalle' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
     public function login(Request $request)
     {
         // Validar los datos de entrada
@@ -91,13 +146,11 @@ class CuentaController extends Controller
             'usuario' => $usuario
         ]);
     }
-    
- 
+
+
 
     public function registrarCuenta(Request $request)
     {
-       
-
         $reglas = [
             'nombre' => 'required|string|max:100',
             'apellido' => 'required|string|max:100',
@@ -105,6 +158,7 @@ class CuentaController extends Controller
             'contrasena' => 'required',
             'rol' => 'required|in:1,2,3',
             'fechaNacimiento' => 'required|date',
+            'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:2048' // ✅ Agregamos validación de imagen
         ];
 
         if ($request->rol == 2) {
@@ -127,51 +181,53 @@ class CuentaController extends Controller
                 'errors' => $validator->errors()
             ], 422);
         }
-        
-        //dd($request);
 
-         try {
+        // ✅ Procesar la imagen si viene
+        $rutaImagen = null;
+        if ($request->hasFile('foto')) {
+            $rutaImagen = $request->file('foto')->store('usuarios', 'public');
+        }
+
+        try {
             $resultado = DB::select('EXEC proCrearCuenta 
-                :rol, 
-                :nombre, 
-                :apellido, 
-                :fechaNacimiento, 
-                :correo, 
-                :contrasena, 
-                :codigoEstudiante, 
-                :idCarrera, 
-                :idMentorCreador, 
-                :descripcionMentor, 
-                :linkedin', [
-                    'rol' => $request->rol,
-                    'nombre' => $request->nombre,
-                    'apellido' => $request->apellido,
-                    'fechaNacimiento' => $request->fechaNacimiento,
-                    'correo' => $request->correo,
-                    'contrasena' => $request->contrasena,
-                    'codigoEstudiante' => $request->codigoEstudiante,
-                    'idCarrera' => $request->carrera,
-                    'idMentorCreador' => $request->creador,
-                    'descripcionMentor' => $request->descripcion ?? '',
-                    'linkedin' => $request->linkedin ?? ''
+            :rol, 
+            :nombre, 
+            :apellido, 
+            :fechaNacimiento, 
+            :correo, 
+            :contrasena, 
+            :codigoEstudiante, 
+            :idCarrera, 
+            :idMentorCreador, 
+            :descripcionMentor, 
+            :linkedin', [
+                'rol' => $request->rol,
+                'nombre' => $request->nombre,
+                'apellido' => $request->apellido,
+                'fechaNacimiento' => $request->fechaNacimiento,
+                'correo' => $request->correo,
+                'contrasena' => $request->contrasena,
+                'codigoEstudiante' => $request->codigoEstudiante,
+                'idCarrera' => $request->carrera,
+                'idMentorCreador' => $request->creador,
+                'descripcionMentor' => $request->descripcion ?? '',
+                'linkedin' => $request->linkedin ?? ''
             ]);
 
+            // 🔁 Aquí puedes guardar $rutaImagen en la tabla `usuario` si tienes un campo para la imagen
 
             return response()->json([
                 'success' => true,
                 'message' => 'Cuenta creada correctamente.',
-                'usuario' => $resultado[0]
+                'usuario' => $resultado[0],
+                'foto' => $rutaImagen ? asset("storage/{$rutaImagen}") : null
             ], 200);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Ocurrió un error al crear la cuenta.',
-                'error' => $e->getMessage() 
+                'error' => $e->getMessage()
             ], 500);
         }
-
-            return response()->json(['success' => true]);
-        }
-
+    }
 }

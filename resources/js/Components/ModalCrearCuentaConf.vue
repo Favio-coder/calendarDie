@@ -6,7 +6,7 @@
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header titulo-agend-actividad">
-            <h5 class="modal-title text-white">Crear cuenta</h5>
+            <h5 class="modal-title text-white">Editar cuenta - {{ usuarioProp.l_nombre + ' ' + usuarioProp.l_apellido }}</h5>
             <button type="button" class="btn-close" @click="closeModal"></button>
           </div>
 
@@ -18,7 +18,7 @@
                   <img :src="preview || defaultImage" class="profile-img mb-2" />
                   <div class="btn btn-secondary btn-sm">Adjuntar foto</div>
                 </label>
-                <input type="file" id="fotoPerfil" class="d-none" @change="handleFileUpload" ref="fotoPerfilInput"/>
+                <input type="file" id="fotoPerfil" class="d-none" @change="handleFileUpload" />
               </div>
 
               <!-- Formulario -->
@@ -56,7 +56,7 @@
                 </div>
 
                 <!-- Sección específica para Estudiante -->
-                <div v-if="form.rol === 3" class="mb-3">
+                <div v-if="usuarioProp.c_rol === '3'" class="mb-3">
                   <hr />
                   <div class="row">
                     <div class="col-md-4 mb-3">
@@ -97,7 +97,7 @@
                 </div>
 
                 <!-- Sección específica para Mentor invitado -->
-                <div v-if="form.rol === 2" class="mb-3">
+                <div v-if="usuarioProp.c_rol === '2' " class="mb-3">
                   <hr />
                   <div class="mb-3">
                     <label class="form-label">Descripción</label>
@@ -113,7 +113,7 @@
                 <div class="mb-1">
                   <button class="btn btn-success w-10" @click="abrirModalPassword">
                     <i class="fa-solid fa-lock"></i>
-                    Establecer contraseña
+                    Cambiar contraseña
                   </button>
                 </div>
               </div>
@@ -122,7 +122,7 @@
 
           <div class="modal-footer">
             <button class="btn btn-danger" @click="closeModal">Cerrar</button>
-            <button class="btn btn-crear-cuenta" @click="grabNuevaCuenta()">Crear cuenta</button>
+            <button class="btn btn-crear-cuenta" @click="grabNuevaCuenta()">Editar cuenta</button>
           </div>
         </div>
       </div>
@@ -142,10 +142,17 @@ import axios from 'axios';
 import { mapGetters } from 'vuex';
 
 export default {
-  name: 'ModalCrearCuenta',
+  name: 'ModalCrearCuentaConf',
+  props: {
+    usuarioProp: {
+      type: Object,
+      required: true
+    }
+  },
   components: {
     ModalCrearContrasena
   },
+
   data() {
     return {
       isModalOpen: false,
@@ -178,6 +185,18 @@ export default {
     }
   },
   mounted() {
+    console.log("Esto se hedera: ", this.usuarioProp)
+    //Llenar el prop 
+    this.form.nombre = this.usuarioProp.l_nombre
+    this.form.apellido = this.usuarioProp.l_apellido
+    this.form.correo = this.usuarioProp.l_correoElectronico
+    this.form.fechaNacimiento = this.usuarioProp.f_nacimiento
+    this.form.rol = this.usuarioProp.c_rol
+    this.form.codigoEstudiante = this.usuarioProp.c_estudiante 
+    this.form.facultad = this.usuarioProp.codigo_facultad 
+    this.form.carrera = this.usuarioProp.c_carrera 
+    this.form.descripcion = this.usuarioProp.l_descripcion 
+    this.form.linkedin =  this.usuarioProp.l_linkedin 
 
     axios.get('/obtenerCarreras').then(
       response => {
@@ -272,23 +291,9 @@ export default {
               this.abrirModalPassword()
             });
           } else {
-            this.form.creador = this.usuario.c_usuario
+            this.form.creador = this.usuario.c_usuario;
 
-            //Guardar imagen
-            const formData = new FormData()
-            for(let key in this.form){
-              formData.append(key, this.form[key])
-            }
-
-            if (this.$refs.fotoPerfilInput && this.$refs.fotoPerfilInput.files[0]) {
-              formData.append('foto', this.$refs.fotoPerfilInput.files[0]);
-            }
-
-            axios.post('/registrarCuenta', formData, {
-              headers:{
-                'Content-Type': 'multipart/form-data'
-              }
-            }).then(response => {
+            axios.post('/registrarCuenta', this.form).then(response => {
               Swal.fire({
                 title: "Mensaje",
                 text: "Cuenta creada",

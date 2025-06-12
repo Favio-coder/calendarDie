@@ -3,8 +3,8 @@ IF OBJECT_ID('proCrearCuenta', 'P') IS NOT NULL
 GO
 
 GO
-CREATE PROCEDURE proCrearCuenta
-	@rol BIGINT,
+CREATE PROCEDURE [dbo].[proCrearCuenta]
+    @rol BIGINT,
     @nombre VARCHAR(100),
     @apellido VARCHAR(100),
     @fechaNacimiento DATE,
@@ -14,7 +14,8 @@ CREATE PROCEDURE proCrearCuenta
     @idCarrera INT,
     @idMentorCreador varchar(100),
     @descripcionMentor text = '',
-	@linkedin varchar(100)
+    @linkedin varchar(100),
+    @fotoPerfil VARCHAR(255) = '' 
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -22,7 +23,7 @@ BEGIN
     DECLARE @idUsua VARCHAR(100)
     SET @idUsua = CONVERT(VARCHAR(100), NEWID())
 
-    -- Insertar en tabla Usuario
+    -- Insertar en tabla Usuario con foto de perfil
     INSERT INTO Usuario (
         c_usuario,
         l_nombre,
@@ -30,7 +31,8 @@ BEGIN
         c_rol,
         f_nacimiento,
         l_correoElectronico,
-        l_contrasena
+        l_contrasena,
+        l_fotoPerfil -- Campo de la foto
     )
     VALUES (
         @idUsua,
@@ -39,7 +41,8 @@ BEGIN
         @rol,
         @fechaNacimiento,
         @correo,
-        @contrasena
+        @contrasena,
+        @fotoPerfil -- Valor de la foto
     );
 
     -- Insertar según rol
@@ -59,13 +62,15 @@ BEGIN
         VALUES (@idUsua, @codigoEstudiante, @idCarrera);
     END
 
+    -- Devolver datos del nuevo usuario (sin contraseña)
     SELECT 
         c_usuario,
         l_nombre,
         l_apellido,
         c_rol,
         f_nacimiento,
-        l_correoElectronico
+        l_correoElectronico,
+        l_fotoPerfil 
     FROM Usuario
     WHERE c_usuario = @idUsua
 END

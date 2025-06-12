@@ -32,14 +32,15 @@
         </div>
 
         <!-- Botón notificaciones -->
-        <button type="button" data-bs-toggle="tooltip" data-bs-placement="bottom"
-          data-bs-custom-class="custom-tooltip" data-bs-title="Notificaciones"
-          class="btn btn-link position-relative me-3" @click="mostrareNotificaciones" ref="btnNoti">
+        <button type="button" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-custom-class="custom-tooltip"
+          data-bs-title="Notificaciones" class="btn btn-link position-relative me-3" @click="mostrareNotificaciones"
+          ref="btnNoti">
           <i class="fas fa-bell custom-icon"></i>
         </button>
 
         <!-- Nombre del usuario -->
-        <span class="mx-3 custom-hover" style="cursor: pointer;">{{ usuario?.l_nombre }} {{ usuario?.l_apellido }}</span>
+        <span class="mx-3 custom-hover" style="cursor: pointer;">{{ usuario?.l_nombre }} {{ usuario?.l_apellido
+        }}</span>
 
         <!-- Imagen o ícono de perfil -->
         <div @click="togglePerfil" style="cursor: pointer;" data-bs-toggle="tooltip" data-bs-placement="bottom"
@@ -64,27 +65,34 @@
 import { mapGetters } from 'vuex'
 import '@fortawesome/fontawesome-free/css/all.css'
 import ModalEditarCuenta from './ModalEditarCuenta.vue'
+import ModalCrearCuentaConf from './ModalCrearCuentaConf.vue'
+
 import { nextTick } from 'vue'
 
 export default {
-  name:'Header',
-  components:{
-    ModalEditarCuenta
+  name: 'Header',
+  components: {
+    ModalEditarCuenta,
   },
   data() {
     return {
       mostrarPanel: false,
       mostrarPerfil: false,
-      imgPerfil: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSvju1zjr7ZyP3iglgTrR35WtKhgOTlATW_sQ&s',
+      imgPerfil: '',
       notificaciones: [],
-      currentView: null, 
-      currentProps: null
+      currentView: null,
+      currentProps: null,
+      q_autorizacion: false
     }
   },
   computed: {
     ...mapGetters(['usuario'])
   },
   mounted() {
+    if (this.usuario.c_rol !== '1') {
+      this.q_autorizacion = true
+    }
+
     const tooltipTrigger = this.$refs.btnNoti
     if (tooltipTrigger) new bootstrap.Tooltip(tooltipTrigger)
 
@@ -94,9 +102,14 @@ export default {
     // Cierra panel si se hace clic fuera
     document.addEventListener('click', this.cerrarPanelesExternos)
   },
+
+
   beforeDestroy() {
     document.removeEventListener('click', this.cerrarPanelesExternos)
   },
+
+
+
   methods: {
     mostrareNotificaciones() {
       this.mostrarPanel = !this.mostrarPanel
@@ -132,7 +145,7 @@ export default {
         this.mostrarPerfil = false
       }
     },
-    cerrarModalEditCuenta(){
+    cerrarModalEditCuenta() {
       this.currentView = null
       this.currentProps = null
     }

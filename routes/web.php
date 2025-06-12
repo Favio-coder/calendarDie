@@ -48,3 +48,4 @@ Route::get('/configuracion', function () {
 Route::post('/login', [CuentaController::class, 'login']);
 Route::post('/registrarCuenta', [CuentaController::class, 'registrarCuenta']);
 Route::get('/obtenerCarreras', [CuentaController::class, 'devCarreraFacu']);
+Route::post('/listUsuarios', [CuentaController::class, 'devusuarios']);

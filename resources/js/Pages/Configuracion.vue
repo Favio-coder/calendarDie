@@ -11,14 +11,18 @@
           <table class="user-table">
             <thead>
               <tr>
-                <th>Nombre de usuario</th>
+                <th>Nombre</th>
+                <th>Apellido</th>
                 <th>Correo</th>
+                <th>Rol</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(usuario, index) in usuarios" :key="index">
-                <td>{{ usuario.nombre }}</td>
-                <td>{{ usuario.correo }}</td>
+              <tr @dblclick="abrirModalEditCuenta(usuario)" v-for="(usuario, index) in usuarios" :key="index">
+                <td>{{ usuario.l_nombre }}</td>
+                <td>{{ usuario.l_apellido }}</td>
+                <td>{{ usuario.l_correoElectronico }}</td>
+                <td>{{ usuario.c_rol }}</td>
               </tr>
             </tbody>
           </table>
@@ -33,7 +37,7 @@
       </div>
     </div>
 
-    <component :is="currentView" ref="modalRef" @close-modalCrearCuenta="cerrarModalCrearCuenta"></component>
+    <component :is="currentView" ref="modalRef" @close-modalCrearCuenta="cerrarModalCrearCuenta" v-bind="currentProps"></component>
   </div>
 </template>
 
@@ -42,48 +46,47 @@ import Header from '@/components/Header.vue';
 import ModalCrearCuenta from '@/Components/ModalCrearCuenta.vue';
 import { nextTick } from 'vue';
 import { mapGetters } from 'vuex';
+import ModalCrearCuentaConf from '../Components/ModalCrearCuentaConf.vue';
+import axios from 'axios';
 
 export default {
   components: {
     Header,
     ModalCrearCuenta,
+    ModalCrearCuentaConf
   },
   data() {
     return {
       currentProps: null,
       currentView: null,
-      usuarios: [
-        { nombre: 'Juan Pérez', correo: 'juan@example.com' },
-        { nombre: 'Ana Torres', correo: 'ana@example.com' },
-        { nombre: 'Luis Gómez', correo: 'luis@example.com' },
-        { nombre: 'Marta Silva', correo: 'marta@example.com' },
-        { nombre: 'Juan Pérez', correo: 'juan@example.com' },
-        { nombre: 'Ana Torres', correo: 'ana@example.com' },
-        { nombre: 'Luis Gómez', correo: 'luis@example.com' },
-        { nombre: 'Marta Silva', correo: 'marta@example.com' },
-        { nombre: 'Juan Pérez', correo: 'juan@example.com' },
-        { nombre: 'Ana Torres', correo: 'ana@example.com' },
-        { nombre: 'Luis Gómez', correo: 'luis@example.com' },
-        { nombre: 'Marta Silva', correo: 'marta@example.com' },
-        { nombre: 'Juan Pérez', correo: 'juan@example.com' },
-        { nombre: 'Ana Torres', correo: 'ana@example.com' },
-        { nombre: 'Luis Gómez', correo: 'luis@example.com' },
-        { nombre: 'Marta Silva', correo: 'marta@example.com' },
-        // Puedes agregar más datos aquí o cargarlos dinámicamente
-      ],
+      usuarios: [],
     };
   },
-  computed:{
+  computed: {
     ...mapGetters(['usuario'])
   },
-  mounted(){
-    if(this.usuario.c_rol !== '1'){
-      alert("No tienes autorizado entrar a esta pagina!!!")
-      window.location.href = '/inicio'
-      return
-    }
+  mounted() {
+    axios.post('/listUsuarios', this.usuario).then(
+      response => {
+        this.usuarios = response.data.usuarios
+
+        console.log("Esto se monta: ", response.data.usuarios)
+      }
+    )
+  
   },
   methods: {
+    abrirModalEditCuenta(_usuario) {
+      console.log(typeof _usuario)
+
+      this.currentView = ModalCrearCuentaConf
+      this.currentProps = { usuarioProp: _usuario }
+      nextTick(() => {
+        if (this.$refs.modalRef && this.$refs.modalRef.openModal) {
+          this.$refs.modalRef.openModal();
+        }
+      })
+    },
     abrirModalCrearCuenta() {
       this.currentView = ModalCrearCuenta;
       nextTick(() => {
@@ -92,7 +95,7 @@ export default {
         }
       });
     },
-    cerrarModalCrearCuenta(){
+    cerrarModalCrearCuenta() {
       this.currentProps = null
       this.currentView = null
     }
