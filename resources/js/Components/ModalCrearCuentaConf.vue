@@ -15,7 +15,7 @@
               <!-- Foto de perfil -->
               <div class="profile-pic-section d-flex flex-column align-items-center text-center">
                 <label for="fotoPerfil" class="profile-label">
-                  <img :src="preview || defaultImage" class="profile-img mb-2" />
+                  <img :src="preview || fotoPerfilURL" class="profile-img mb-2" />
                   <div class="btn btn-secondary btn-sm">Adjuntar foto</div>
                 </label>
                 <input type="file" id="fotoPerfil" class="d-none" @change="handleFileUpload" />
@@ -182,7 +182,10 @@ export default {
     carrerasFiltradas() {
       const seleccionada = this.facultades.find(f => f.codigo_facultad == this.form.facultad)
       return seleccionada ? seleccionada.carreras : []
-    }
+    },
+    fotoPerfilURL() {
+          return this.usuarioProp.l_fotoPerfil || this.defaultImage;
+        }
   },
   mounted() {
     console.log("Esto se hedera: ", this.usuarioProp)

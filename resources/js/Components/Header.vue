@@ -11,11 +11,11 @@
       <!-- Ítems de menú -->
       <div class="d-flex align-items-center">
         <a class="nav-link mx-4 custom-hover" href="/inicio">Inicio</a>
-        <a class="nav-link mx-4 custom-hover" href="/actividades">Actividades</a>
-        <a class="nav-link mx-4 custom-hover" href="#">Programas</a>
-        <a class="nav-link mx-4 custom-hover" href="#">Recursos</a>
+        <a v-if="!q_autorizacion" class="nav-link mx-4 custom-hover" href="/actividades">Actividades</a>
+        <a  class="nav-link mx-4 custom-hover" href="#">Programas</a>
+        <a v-if="!q_autorizacion" class="nav-link mx-4 custom-hover" href="/recursos">Recursos</a>
         <a class="nav-link mx-4 custom-hover" href="#">Concursos</a>
-        <a class="nav-link mx-4 custom-hover" href="/configuracion">Configuración</a>
+        <a v-if="!q_autorizacion" class="nav-link mx-4 custom-hover" href="/configuracion">Configuración</a>
       </div>
 
       <!-- Notificaciones, nombre y foto -->
@@ -45,7 +45,7 @@
         <!-- Imagen o ícono de perfil -->
         <div @click="togglePerfil" style="cursor: pointer;" data-bs-toggle="tooltip" data-bs-placement="bottom"
           data-bs-custom-class="custom-tooltip" data-bs-title="Perfil" ref="perfilTooltip">
-          <img v-if="imgPerfil" :src="imgPerfil" alt="Foto de perfil" class="rounded-circle"
+          <img v-if="usuario.l_fotoPerfil" :src="fotoPerfilURL" alt="Foto de perfil" class="rounded-circle"
             style="width: 40px; height: 40px;" />
           <i v-else class="fas fa-user-circle fa-3x text-secondary"></i>
         </div>
@@ -86,7 +86,14 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['usuario'])
+    ...mapGetters(['usuario']),
+
+    fotoPerfilURL() {
+            // Si ya tiene foto, retornarla como URL completa, si no usar imagen por defecto
+            return this.usuario.l_fotoPerfil
+            ? `http://localhost:8000/${this.usuario.l_fotoPerfil}`
+            : this.defaultImage;
+        }
   },
   mounted() {
     if (this.usuario.c_rol !== '1') {

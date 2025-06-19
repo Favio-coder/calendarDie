@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\ejemploController;
 use App\Http\Controllers\CuentaController;
+use App\Http\Controllers\EquipoController;
+
 
 // Vistas renderizadas en VUE
 Route::get('/', function () {
@@ -43,9 +45,19 @@ Route::get('/configuracion', function () {
     ]);
 });
 
+Route::get('/recursos', function () {
+    return Inertia::render('Recursos', [
+        'appName' => config('app.name'),
+    ]);
+});
+
 
 // Rutas para consumir con get y post 
 Route::post('/login', [CuentaController::class, 'login']);
 Route::post('/registrarCuenta', [CuentaController::class, 'registrarCuenta']);
 Route::get('/obtenerCarreras', [CuentaController::class, 'devCarreraFacu']);
 Route::post('/listUsuarios', [CuentaController::class, 'devusuarios']);
+Route::get('/obtenerEstudiantesXcarrera', [EquipoController::class, 'listEstudiantesxCarrera']);
+Route::post('/grabarEquipo', [EquipoController::class, 'grabEquipo']);
+Route::get('/listEquipo', [EquipoController::class, 'listEquipo']);
+Route::post('/elimEquipo', [EquipoController::class, 'elimEquipo']);
