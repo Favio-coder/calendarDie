@@ -158,7 +158,7 @@ class CuentaController extends Controller
             'contrasena' => 'required',
             'rol' => 'required|in:1,2,3',
             'fechaNacimiento' => 'required|date',
-            'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:2048' // ✅ Agregamos validación de imagen
+            'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:2048' 
         ];
 
         if ($request->rol == 2) {
@@ -182,45 +182,56 @@ class CuentaController extends Controller
             ], 422);
         }
 
-        // ✅ Procesar la imagen si viene
-        $rutaImagen = null;
-        if ($request->hasFile('foto')) {
-            $rutaImagen = $request->file('foto')->store('usuarios', 'public');
-        }
+        // $rutaImagen = null;
+        // if ($request->hasFile('foto')) {
+        //     $rutaImagen = $request->file('foto')->store('usuarios', 'public');
+        // }
 
+        //$data = $request->all();
+
+        // Guardar imagen si existe
+        $fotoRuta = null;
+        if ($request->hasFile('foto')) {
+            $foto = $request->file('foto');
+            $nombreFoto = uniqid() . '_' . $foto->getClientOriginalName();
+            
+            $foto->move(public_path('fotos_usuarios'), $nombreFoto);
+            $fotoRuta = 'fotos_usuarios/' . $nombreFoto; 
+        }
         try {
             $resultado = DB::select('EXEC proCrearCuenta 
-            :rol, 
-            :nombre, 
-            :apellido, 
-            :fechaNacimiento, 
-            :correo, 
-            :contrasena, 
-            :codigoEstudiante, 
-            :idCarrera, 
-            :idMentorCreador, 
-            :descripcionMentor, 
-            :linkedin', [
-                'rol' => $request->rol,
-                'nombre' => $request->nombre,
-                'apellido' => $request->apellido,
-                'fechaNacimiento' => $request->fechaNacimiento,
-                'correo' => $request->correo,
-                'contrasena' => $request->contrasena,
-                'codigoEstudiante' => $request->codigoEstudiante,
-                'idCarrera' => $request->carrera,
-                'idMentorCreador' => $request->creador,
-                'descripcionMentor' => $request->descripcion ?? '',
-                'linkedin' => $request->linkedin ?? ''
-            ]);
+                        :rol, 
+                        :nombre, 
+                        :apellido, 
+                        :fechaNacimiento, 
+                        :correo, 
+                        :contrasena, 
+                        :codigoEstudiante, 
+                        :idCarrera, 
+                        :idMentorCreador, 
+                        :descripcionMentor, 
+                        :linkedin, 
+                        :fotoPerfil', [
+                        'rol' => $request->rol,
+                        'nombre' => $request->nombre,
+                        'apellido' => $request->apellido,
+                        'fechaNacimiento' => $request->fechaNacimiento,
+                        'correo' => $request->correo,
+                        'contrasena' => $request->contrasena,
+                        'codigoEstudiante' => $request->codigoEstudiante,
+                        'idCarrera' => $request->carrera,
+                        'idMentorCreador' => $request->creador,
+                        'descripcionMentor' => $request->descripcion ?? '',
+                        'linkedin' => $request->linkedin ?? '', 
+                        'fotoPerfil' => $fotoRuta ?? ''
+                    ]);
 
-            // 🔁 Aquí puedes guardar $rutaImagen en la tabla `usuario` si tienes un campo para la imagen
 
             return response()->json([
                 'success' => true,
                 'message' => 'Cuenta creada correctamente.',
                 'usuario' => $resultado[0],
-                'foto' => $rutaImagen ? asset("storage/{$rutaImagen}") : null
+                'foto' => $fotoRuta ? asset("fotos_usuarios/{$fotoRuta}") : null
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
