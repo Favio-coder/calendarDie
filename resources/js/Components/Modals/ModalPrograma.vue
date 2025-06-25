@@ -6,17 +6,17 @@
       <div class="modal-dialog" style="max-width: 1300px;">
         <div class="modal-content">
           <div class="modal-header titulo-agend-actividad">
-            <h5 class="modal-title text-white">Equipos de emprendimiento</h5>
+            <h5 class="modal-title text-white">Programa - {{ programaProp.l_programa }}</h5>
             <button type="button" class="btn-close" @click="closeModal"></button>
           </div>
 
           <div class="modal-body">
-            <div>
-              <button @click="abrirModalCrearEquipo" type="button" class="btn btn-primary">
-                <i class="fa-solid fa-plus"></i> Agregar Equipo
+            <div v-if="usuario.c_rol === '1' || usuario.c_rol === '2'">
+              <button @click="abrirModalCrearSesion" type="button" class="btn btn-primary">
+                <i class="fa-solid fa-plus"></i> Agregar Sesión
               </button>
             </div>
-            <hr>
+            <hr v-if="usuario.c_rol === '1' || usuario.c_rol === '2'">
 
             <!-- Cargando -->
             <div v-if="isLoading" class="text-center my-4">
@@ -31,27 +31,25 @@
             <!-- Contenedor con scroll oculto -->
             <div class="scroll-contenedor" v-else>
               <div class="row">
-                <div v-for="item in equipos" :key="item.c_equipo" class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
+                <div @click="abrirModalSesion(item)" v-for="(item, idx) in sesiones" :key="item.c_sesion"
+                  class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
                   <div class="position-relative card shadow border-0 h-100">
-                    <!-- Botón de eliminar -->
-                    <button @click="eliminarEquipo(item)"
-                      class="btn btn-light btn-sm position-absolute top-0 end-0 m-2 eliminar-btn"
-                      title="Eliminar equipo">
-                      <i class="fa-solid fa-xmark"></i>
+                    <button v-if="usuario.c_rol === '1' || usuario.c_rol === '2'" @click.stop="eliminarSesion(item)"
+                      class="btn-close-sesion" title="Eliminar sesión">
+                      <i class="fa-solid fa-xmark small-icon"></i>
                     </button>
+                    <img :src="item.l_fotoSesion || defaultImage" alt="Imagen de sesión" class="card-img-top img-fluid"
+                      style="max-height: 150px; object-fit: cover; background-color: #f8f9fa;" />
 
-                    <!-- Imagen del equipo -->
-                    <img :src="item.l_logoEquipo || defaultImage" alt="Logo del equipo" class="card-img-top img-fluid"
-                      style="max-height: 150px; object-fit: contain; background-color: #f8f9fa;" />
-
-                    <!-- Cuerpo de la tarjeta -->
                     <div class="card-body text-center">
-                      <h6 class="card-title text-dark mb-0 text-truncate">{{ item.l_equipo }}</h6>
+                      <h6 class="card-title text-dark mb-1">Sesión {{ idx + 1 }}</h6>
+                      <p class="mb-0 small text-muted">{{ item.l_sesion }}</p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
+
           </div>
 
           <div class="modal-footer">
@@ -60,40 +58,35 @@
         </div>
       </div>
     </div>
-    <component :is="currentView" ref="modalRef" v-bind="currentProps" @close-modalEquipo="cerrarModalEquipo" />
+    <component :is="currentView" ref="modalRef" v-bind="currentProps" @close-modalEquipo="cerrarModalPrograma"
+      @close-modalSesion="cerrarModalSesion" />
   </div>
 </template>
 
 <script>
 import Swal from 'sweetalert2';
-import ModalAgregarEquipo from './ModalAgregarEquipo.vue';
+
+import ModalSesion from './ModalSesion.vue';
 import { nextTick } from 'vue';
 import axios from 'axios';
 import { mapGetters } from 'vuex';
 
+import ModalAgregarSesion from './ModalAgregarSesion.vue';
+
 export default {
-  name: 'ModalEquipo',
+  name: 'ModalPrograma',
+  props: {
+    programaProp: Object
+  },
   components: {
-    ModalAgregarEquipo
+    ModalSesion
   },
   data() {
     return {
       isModalOpen: false,
-      equipos: [],
       isLoading: false,
-      form: {
-        nombre: '',
-        apellido: '',
-        correo: '',
-        fechaNacimiento: '',
-        rol: '',
-        codigoEstudiante: '',
-        facultad: '',
-        carrera: '',
-        descripcion: '',
-        linkedin: '',
-        contrasena: ''
-      },
+      sesiones: [],
+
       preview: null,
       defaultImage: 'https://www.shutterstock.com/image-vector/image-icon-trendy-flat-style-600nw-643080895.jpg',
       currentView: null,
@@ -104,74 +97,74 @@ export default {
     ...mapGetters(['usuario'])
   },
   mounted() {
-    this.generarListEquipo()
+    this.cargarSesiones();
   },
   methods: {
-    generarListEquipo() {
-      this.isLoading = true
-      axios.get('/listEquipo')
-        .then(response => {
-          const equipos = response.data.Equipo
-          const detalles = response.data.EquipoDet
-          equipos.forEach(equipo => {
-            equipo.integrantes = detalles.filter(det => det.c_equipo === equipo.c_equipo)
-          })
-          this.equipos = equipos
-        })
-        .catch(err => {
-          console.error("Existe este error: ", err)
-        })
-        .finally(() => {
-          this.isLoading = false
-        })
+    cargarSesiones() {
+      this.isLoading = true;
+      axios.post('/listSesionXprograma', this.programaProp).then(response => {
+        this.sesiones = response.data.sesiones;
+        this.isLoading = false;
+      }).catch(() => {
+        this.isLoading = false;
+      });
     },
-    cerrarModalEquipo() {
-      this.generarListEquipo()
-      this.currentView = null
-      this.currentProps = null
+    cerrarModalPrograma() {
+      this.currentView = null;
+      this.currentProps = null;
     },
     openModal() {
       this.isModalOpen = true;
       document.body.classList.add('modal-open');
     },
     closeModal() {
+      this.$emit('close-modalPrograma');
       this.isModalOpen = false;
       document.body.classList.remove('modal-open');
     },
-    abrirModalCrearEquipo() {
-      this.currentView = ModalAgregarEquipo
+    abrirModalCrearSesion() {
+      this.currentView = ModalAgregarSesion;
+      this.currentProps = {
+        codPrograma: this.programaProp.c_programa
+      };
       nextTick(() => {
         if (this.$refs.modalRef && this.$refs.modalRef.openModal) {
           this.$refs.modalRef.openModal();
         }
       });
     },
-    eliminarEquipo(data) {
-      Swal.fire({
-        title: '¿Estás seguro?',
-        text: `Eliminarás el equipo "${data.l_equipo}" y todos sus integrantes.`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar',
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          axios.post('/elimEquipo', data)
-            .then(() => {
-              this.generarListEquipo()
-              Swal.fire({
-                icon: 'success',
-                title: 'Equipo eliminado',
-                text: 'El equipo fue eliminado correctamente.'
-              })
-            })
-            .catch(err => {
-              console.error("Error al eliminar el equipo:", err)
-            })
+    eliminarSesion(data) {
+      const c_sesion = parseInt(data.c_sesion);
+      const c_programa = parseInt(data.c_programa);
+
+      const dataEnviar = {
+        c_sesion,
+        c_programa
+      };
+
+      this.isLoading = true;
+
+      axios.post('/elimSesion', dataEnviar).then(() => {
+        this.cargarSesiones(); // 🔁 recargar sesiones después de eliminar
+      }).catch(() => {
+        this.isLoading = false;
+      });
+    },
+    abrirModalSesion(sesion) {
+      this.currentView = ModalSesion;
+      this.currentProps = {
+        sesionProp: sesion
+      };
+      nextTick(() => {
+        if (this.$refs.modalRef && this.$refs.modalRef.openModal) {
+          this.$refs.modalRef.openModal();
         }
-      })
+      });
+    },
+    cerrarModalSesion() {
+      this.cargarSesiones();
+      this.currentView = null;
+      this.currentProps = null;
     }
   }
 }
@@ -192,6 +185,7 @@ export default {
   width: 0px;
   background: transparent;
 }
+
 .scroll-contenedor {
   scrollbar-width: none;
 }
@@ -207,26 +201,29 @@ export default {
   color: white;
 }
 
-/* Loader bolitas */
 .loader-dots {
   display: flex;
   justify-content: center;
   gap: 10px;
   align-items: center;
 }
+
 .dot {
   width: 14px;
   height: 14px;
   border-radius: 50%;
   animation: bounce 0.6s infinite alternate;
 }
+
 .dot-blue {
   background-color: #12BACA;
 }
+
 .dot-yellow {
   background-color: #FFD700;
   animation-delay: 0.2s;
 }
+
 @keyframes bounce {
   from {
     transform: translateY(0);
@@ -235,7 +232,35 @@ export default {
     transform: translateY(-10px);
   }
 }
-.btn-close{
+
+.btn-close {
   filter: invert(1) brightness(2);
+}
+
+.btn-close-sesion {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  border: none;
+  background-color: transparent;
+  color: #999;
+  font-size: 0.85rem;
+  z-index: 2;
+  opacity: 0.6;
+  transition: all 0.2s ease;
+}
+
+.btn-close-sesion:hover {
+  color: #dc3545;
+  transform: scale(1.2);
+  opacity: 1;
+}
+
+.small-icon {
+  font-size: 1.1rem;
+}
+
+.session-card:hover .btn-close-sesion {
+  opacity: 1;
 }
 </style>

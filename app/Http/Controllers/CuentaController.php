@@ -241,4 +241,8 @@ class CuentaController extends Controller
             ], 500);
         }
     }
+
+    function eliminarCuenta(Request $request){
+        
+    }
 }

@@ -5,7 +5,10 @@ use Inertia\Inertia;
 use App\Http\Controllers\ejemploController;
 use App\Http\Controllers\CuentaController;
 use App\Http\Controllers\EquipoController;
-
+use App\Http\Controllers\RecursoController;
+use App\Http\Controllers\MentorController;
+use App\Http\Controllers\ProgramaController;
+use App\Http\Controllers\SesionController;
 
 // Vistas renderizadas en VUE
 Route::get('/', function () {
@@ -51,13 +54,41 @@ Route::get('/recursos', function () {
     ]);
 });
 
+Route::get('/programas', function () {
+    return Inertia::render('Programas', [
+        'appName' => config('app.name'),
+    ]);
+});
 
 // Rutas para consumir con get y post 
+
+// Acceso
 Route::post('/login', [CuentaController::class, 'login']);
 Route::post('/registrarCuenta', [CuentaController::class, 'registrarCuenta']);
+Route::post('/elimCuenta', [CuentaController::class, 'eliminarCuenta']);
+
+//Obtener carreras
 Route::get('/obtenerCarreras', [CuentaController::class, 'devCarreraFacu']);
 Route::post('/listUsuarios', [CuentaController::class, 'devusuarios']);
 Route::get('/obtenerEstudiantesXcarrera', [EquipoController::class, 'listEstudiantesxCarrera']);
+
+//Modulo de equipo
 Route::post('/grabarEquipo', [EquipoController::class, 'grabEquipo']);
 Route::get('/listEquipo', [EquipoController::class, 'listEquipo']);
 Route::post('/elimEquipo', [EquipoController::class, 'elimEquipo']);
+
+//Modulo de recurso 
+Route::get('/listRecursos', [RecursoController::class, 'listRecursos']);
+Route::post('/elimRecurso', [RecursoController::class, 'elimRecurso']);
+Route::post('/grabRecurso', [RecursoController::class, 'grabRecurso']);
+
+//Modulo de mentores
+Route::get('/listMentores', [MentorController::class, 'listMentores']);
+
+//Modulo de programas 
+Route::get('/listProgramas', [ProgramaController::class, 'listProgramas']);
+
+//Modulo de sesión
+Route::post('/listSesionXprograma', [SesionController::class, 'listSesionXprograma']);
+Route::post('/grabSesion', [SesionController::class, 'grabSesion']);
+Route::post('/elimSesion', [SesionController::class, 'elimSesion']);

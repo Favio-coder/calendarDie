@@ -12,7 +12,8 @@
 
                     <div class="modal-body">
                         <h5>Filtros:</h5>
-                        <div class="row mb-3">
+                        <div class="row mb-3 align-items-end">
+                            <!-- Facultad -->
                             <div class="col-md-6">
                                 <label class="form-label">Facultad:</label>
                                 <select class="form-select" v-model="carreraSeleccionada">
@@ -23,7 +24,15 @@
                                     </option>
                                 </select>
                             </div>
+
+                            <!-- Búsqueda -->
+                            <div class="col-md-6 mt-2 mt-md-0">
+                                <label class="form-label">Buscar estudiante:</label>
+                                <input type="text" class="form-control" v-model="busqueda"
+                                    placeholder="🔍 Nombre o apellido">
+                            </div>
                         </div>
+
 
                         <div class="table-responsive">
                             <table class="table table-bordered align-middle text-center">
@@ -84,6 +93,7 @@ export default {
             estudiantes: [],
             carreras: [],
             carreraSeleccionada: null,
+            busqueda: '',
             form: {
                 nombre: '',
                 apellido: '',
@@ -107,12 +117,21 @@ export default {
         ...mapGetters(['usuario']),
 
         estudiantesFiltrados() {
-            if (!this.carreraSeleccionada) {
-                return this.estudiantes;
+            let lista = this.estudiantes;
+
+            if (this.carreraSeleccionada) {
+                lista = lista.filter(est => est.c_carrera === this.carreraSeleccionada);
             }
-            return this.estudiantes.filter(
-                est => est.c_carrera === this.carreraSeleccionada
-            );
+
+            if (this.busqueda.trim()) {
+                const texto = this.busqueda.trim().toLowerCase();
+                lista = lista.filter(est =>
+                    est.l_nombre.toLowerCase().includes(texto) ||
+                    est.l_apellido.toLowerCase().includes(texto)
+                );
+            }
+
+            return lista;
         }
     },
     mounted() {
@@ -193,6 +212,6 @@ export default {
 }
 
 .titulo-agend-actividad .btn-close {
-  filter: invert(1) brightness(2);
+    filter: invert(1) brightness(2);
 }
 </style>

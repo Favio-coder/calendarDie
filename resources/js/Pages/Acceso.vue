@@ -50,6 +50,7 @@
 import Swal from 'sweetalert2';
 import axios from 'axios';
 
+
 export default {
   data() {
     return {
@@ -77,6 +78,7 @@ export default {
               text: "¡Bienvenido!",
               icon: "success",
               confirmButtonColor: "#12BACA",
+              confirmButtonText: "Ingresar"
             }).then(
               () => {window.location.href = '/inicio'}
             )
