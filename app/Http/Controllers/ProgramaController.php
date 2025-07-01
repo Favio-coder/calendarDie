@@ -16,7 +16,7 @@ class ProgramaController extends Controller
 
             return response()->json([
                 'success' => true,
-                'mentores' => $programas
+                'programas' => $programas
             ]);
         } catch (\Exception $e) {
             return response()->json([

@@ -20,21 +20,13 @@
             </select>
           </div>
 
+          <button @click="abrirModalCrearCuenta" class="btn btn-primary mb-2">
+            <i class="fa-solid fa-plus"></i> Agregar usuario
+          </button>
 
           <div class="table-wrapper">
-            <button @click="abrirModalCrearCuenta" class="btn btn-primary mb-2">
-              <i class="fa-solid fa-plus"></i> Agregar usuario
-            </button>
-
-            <!-- Loader mientras carga -->
-            <div v-if="cargandoUsuarios" class="text-center py-4">
-              <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Cargando...</span>
-              </div>
-            </div>
-
             <!-- Tabla -->
-            <table v-else class="user-table">
+            <table class="user-table">
               <thead>
                 <tr>
                   <th>Foto</th>
@@ -72,11 +64,11 @@
             🛡️
             <span>Permisos</span>
           </div>
-          <div class="action-box" @click="accion('asignar_programa')">
+          <div class="action-box" @click="abrirModalAsignarPrograma()">
             🧩
             <span>Asignar programa</span>
           </div>
-          <div class="action-box" @click="accion('estadisticas')">
+          <div class="action-box" @click="abrirModalEstadistica()">
             📊
             <span>Estadísticas</span>
           </div>
@@ -85,8 +77,8 @@
       </div>
     </div>
 
-    <component :is="currentView" ref="modalRef" @close-modalCrearCuenta="cerrarModalCrearCuenta"
-      v-bind="currentProps" />
+    <component :is="currentView" ref="modalRef" @close-modalCrearCuenta="cerrarModalCrearCuenta" v-bind="currentProps"
+      @close-modalEstadistica="cerrarModalEstadistica" @close-modalAsignProgram="cerrarModalAsignProgram" />
   </div>
 </template>
 
@@ -97,18 +89,24 @@ import ModalCrearCuentaConf from '../Components/ModalCrearCuentaConf.vue';
 import axios from 'axios';
 import { mapGetters } from 'vuex';
 import { nextTick } from 'vue';
+import ModalEstadistica from '../Components/Modals/ModalEstadistica.vue';
+import ModalAsignProgram from '../Components/Modals/ModalAsignProgram.vue';
+import Swal from 'sweetalert2';
 
 export default {
   components: {
     Header,
     ModalCrearCuenta,
-    ModalCrearCuentaConf
+    ModalCrearCuentaConf,
+    ModalEstadistica,
+    ModalAsignProgram
   },
   data() {
     return {
       currentProps: null,
       currentView: null,
       usuarios: [],
+      usuariosUnicos: [],
       filtroNombre: '',
       filtroRol: '',
       defaultFoto: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'
@@ -117,7 +115,7 @@ export default {
   computed: {
     ...mapGetters(['usuario']),
     usuariosFiltrados() {
-      return this.usuarios.filter(u => {
+      return this.usuariosUnicos.filter(u => {
         const coincideNombre = `${u.l_nombre} ${u.l_apellido}`.toLowerCase().includes(this.filtroNombre.toLowerCase());
         const coincideRol = this.filtroRol === '' || String(u.c_rol) === this.filtroRol;
         return coincideNombre && coincideRol;
@@ -127,6 +125,17 @@ export default {
   mounted() {
     axios.post('/listUsuarios', this.usuario).then(response => {
       this.usuarios = response.data.usuarios;
+      const usuarios = response.data.usuarios;
+
+      // Eliminar duplicados por c_usuario
+      const usuariosUnicos = usuarios.reduce((acc, usuario) => {
+        if (!acc.some(u => u.c_usuario === usuario.c_usuario)) {
+          acc.push(usuario);
+        }
+        return acc;
+      }, []);
+
+      this.usuariosUnicos = usuariosUnicos
     });
   },
   methods: {
@@ -155,10 +164,74 @@ export default {
       this.currentView = null;
     },
     accion(tipo) {
-      alert(`Has hecho clic en: ${tipo}`);
+      alert(`Has hecho clic en: ${tipo}`)
+
     },
-    eliminarUsuario(usuario){
-      alert(usuario)
+    eliminarUsuario(usuario) {
+      Swal.fire({
+        title: '¿Estás seguro?',
+        text: "¡Esta acción no se puede deshacer!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          axios.post('/eliminarUsuario', usuario).then(response => {
+            if (response.data.success) {
+              // Elimina el usuario localmente de la lista
+              this.usuariosUnicos = this.usuariosUnicos.filter(u => u.c_usuario !== usuario.c_usuario)
+
+              Swal.fire(
+                'Eliminado',
+                'El usuario ha sido eliminado correctamente.',
+                'success'
+              )
+            } else {
+              Swal.fire(
+                'Error',
+                response.data.mensaje || 'Hubo un problema al eliminar el usuario.',
+                'error'
+              )
+            }
+          }).catch(() => {
+            Swal.fire(
+              'Error',
+              'Ocurrió un error en el servidor.',
+              'error'
+            )
+          })
+        }
+      })
+    },
+    abrirModalEstadistica() {
+      this.currentView = ModalEstadistica;
+      nextTick(() => {
+        if (this.$refs.modalRef && this.$refs.modalRef.openModal) {
+          this.$refs.modalRef.openModal();
+        }
+      });
+    },
+    cerrarModalEstadistica() {
+      this.currentProps = null;
+      this.currentView = null;
+    },
+    abrirModalAsignarPrograma() {
+      this.currentView = ModalAsignProgram
+      this.currentProps = {
+        usuarios: this.usuarios
+      }
+      nextTick(() => {
+        if (this.$refs.modalRef && this.$refs.modalRef.openModal) {
+          this.$refs.modalRef.openModal();
+        }
+      });
+    },
+    cerrarModalAsignProgram() {
+      this.currentProps = null;
+      this.currentView = null;
     }
   }
 };
@@ -210,7 +283,7 @@ export default {
 
 .table-wrapper {
   overflow-y: auto;
-  max-height: 300px;
+  max-height: 240px;
   border: 1px solid #ddd;
   border-radius: 8px;
 }

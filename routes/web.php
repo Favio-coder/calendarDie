@@ -9,6 +9,8 @@ use App\Http\Controllers\RecursoController;
 use App\Http\Controllers\MentorController;
 use App\Http\Controllers\ProgramaController;
 use App\Http\Controllers\SesionController;
+use App\Http\Controllers\ConfiguracionController;
+use App\Http\Controllers\PermisoController;
 
 // Vistas renderizadas en VUE
 Route::get('/', function () {
@@ -92,3 +94,14 @@ Route::get('/listProgramas', [ProgramaController::class, 'listProgramas']);
 Route::post('/listSesionXprograma', [SesionController::class, 'listSesionXprograma']);
 Route::post('/grabSesion', [SesionController::class, 'grabSesion']);
 Route::post('/elimSesion', [SesionController::class, 'elimSesion']);
+
+//Modulo de configuración
+Route::get('/genEstadisticas', [ConfiguracionController::class, 'genEstadisticas']);
+Route::post('/detMatriculaProgram', [ConfiguracionController::class, 'detMatriculaProgram']);
+Route::post('/grabMatriculaMentorEstudiante', [ConfiguracionController::class, 'grabMatriculaMentorEstudiante']);
+Route::post('/elimMatriculaMentorEst', [ConfiguracionController::class, 'elimMatriculaMentorEst']);
+Route::post('/eliminarUsuario', [ConfiguracionController::class, 'eliminarUsuario']);
+
+
+//Modulo de permisos 
+Route::post('/listPermisos', [PermisoController::class, 'listPermisos']);

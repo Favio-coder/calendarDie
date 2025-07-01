@@ -25,13 +25,14 @@
                 <span class="dot dot-yellow"></span>
                 <span class="dot dot-blue"></span>
               </div>
-              <p class="mt-2 mb-0">Cargando equipos...</p>
+              <p class="mt-2 mb-0">Cargando programas...</p>
             </div>
 
             <!-- Contenedor con scroll oculto -->
             <div class="scroll-contenedor" v-else>
               <div class="row">
-                <div @click="abrirModalSesion(item)" v-for="(item, idx) in sesiones" :key="item.c_sesion"
+                <div v-if="sesiones.length != 0">
+                    <div @click="abrirModalSesion(item)" v-for="(item, idx) in sesiones" :key="item.c_sesion"
                   class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
                   <div class="position-relative card shadow border-0 h-100">
                     <button v-if="usuario.c_rol === '1' || usuario.c_rol === '2'" @click.stop="eliminarSesion(item)"
@@ -47,6 +48,12 @@
                     </div>
                   </div>
                 </div>
+                </div>
+
+                <div v-else class="text-center my-4">
+                    <p class="mt-2 mb-0">No hay sesiones existentes</p>
+                </div>
+                
               </div>
             </div>
 

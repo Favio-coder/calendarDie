@@ -52,7 +52,6 @@ export default {
         { titulo: "Red de Mentores", emoji: "🧠", color: "linear-gradient(135deg, #007bff, #00c6ff)" },
         { titulo: "Equipos", emoji: "👥", color: "linear-gradient(135deg, #ffc107, #ffdd59)" },
         { titulo: "Recursos Físicos", emoji: "🏢", color: "linear-gradient(135deg, #fd7e14, #ff9f43)" },
-        { titulo: "Estudiantes", emoji: "🤝", color: "linear-gradient(135deg, #7F00FF, #E100FF)" },
       ]
     }
   },

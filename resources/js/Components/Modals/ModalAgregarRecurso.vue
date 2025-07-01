@@ -7,7 +7,8 @@
         <div class="modal-content modal-sombra">
           <!-- Header -->
           <div class="modal-header titulo-agend-actividad text-white">
-            <h5 class="modal-title">Agregar Recurso</h5>
+            <h5 v-if="accion === 'insertar'" class="modal-title">Agregar Recurso</h5>
+            <h5 v-else class="modal-title">Editar Recurso</h5>
             <button type="button" class="btn-close btn-close-white" @click="closeModal"></button>
           </div>
 

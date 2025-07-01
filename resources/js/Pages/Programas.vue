@@ -10,20 +10,31 @@
 
     <div class="container my-5">
       <!-- Tarjetas generadas dinámicamente -->
-      <div @click="abrirModalPrograma(programa)" v-for="(programa, index) in programas" :key="programa.c_programa" class="program-card mb-4"
-        :class="getColorClass(index)" @mouseover="hover = programa.c_programa" @mouseleave="hover = ''">
-        <div class="d-flex justify-content-between align-items-center">
-          <h5 class="mb-0 fw-bold text-white">{{ programa.l_programa }}</h5>
-          <i :class="getIconClass(index)" class="fa-lg text-white"></i>
+      <div v-if="programas.length != 0">
+        <div @click="abrirModalPrograma(programa)" v-for="(programa, index) in programas" :key="programa.c_programa"
+          class="program-card mb-4" :class="getColorClass(index)" @mouseover="hover = programa.c_programa"
+          @mouseleave="hover = ''">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold text-white">{{ programa.l_programa }}</h5>
+            <i :class="getIconClass(index)" class="fa-lg text-white"></i>
+          </div>
+          <transition name="fade">
+            <p v-if="hover === programa.c_programa" class="descripcion mt-2 text-white">
+              {{ programa.l_descripcion }}
+            </p>
+          </transition>
         </div>
-        <transition name="fade">
-          <p v-if="hover === programa.c_programa" class="descripcion mt-2 text-white">
-            {{ programa.l_descripcion }}
-          </p>
-        </transition>
       </div>
+      <div v-else>
+        <div class="text-center py-5 header-alerta text-white">
+          <h2 class="display-5 fw-bold mb-1">No fuiste asignado a ningún programa ☹️</h2>
+          <p class="lead mb-0">Comunicate con el administrador</p>
+        </div>
+      </div>
+
     </div>
-    <component :is="currentView" ref="modalRef" v-bind="currentProps" @close-modalPrograma="closeModalPrograma"></component>
+    <component :is="currentView" ref="modalRef" v-bind="currentProps" @close-modalPrograma="closeModalPrograma">
+    </component>
   </div>
 </template>
 
@@ -32,6 +43,8 @@ import Header from '@/components/Header.vue'
 import axios from 'axios'
 import ModalPrograma from '../Components/Modals/ModalPrograma.vue'
 import { nextTick } from 'vue'
+import { mapGetters } from 'vuex'
+
 
 export default {
   components: { Header, ModalPrograma },
@@ -40,13 +53,45 @@ export default {
       hover: '',
       programas: [],
       currentView: null,
-      currentProps: null
+      currentProps: null,
+      permisosEst: []
     }
   },
+  computed: {
+    ...mapGetters(['usuario']),
+
+  },
   mounted() {
-    axios.get('listProgramas').then(response => {
-      this.programas = response.data.mentores 
-    })
+    if (this.usuario.c_rol !== '1') {
+      axios.post('/listPermisos', this.usuario).then(response => {
+        this.permisosEst = response.data.permisos;
+        console.log('Permisos del usuario:', this.permisosEst);
+
+        axios.get('/listProgramas').then(response => {
+          const todosLosProgramas = response.data.programas;
+
+          const programasPermitidos = todosLosProgramas.filter(programa => {
+            return this.permisosEst.some(permiso =>
+              permiso.c_programa === programa.c_programa &&
+              permiso.l_modulo === 'programa' &&
+              permiso.l_tipo === 'visualizar' &&
+              permiso.q_activo === '1'
+            );
+          });
+
+          this.programas = programasPermitidos;
+          console.log('Programas filtrados:', this.programas);
+        });
+
+      });
+    } else {
+      // Administrador: ve todos los programas
+      axios.get('/listProgramas').then(response => {
+        this.programas = response.data.programas;
+        console.log('Programas del admin:', this.programas);
+      });
+    }
+
   },
   methods: {
     getColorClass(index) {
@@ -63,7 +108,7 @@ export default {
       ]
       return icons[index % icons.length]
     },
-    abrirModalPrograma(programa){
+    abrirModalPrograma(programa) {
       console.log("Este es el programa: ", programa)
       this.currentView = ModalPrograma
       this.currentProps = {
@@ -75,7 +120,7 @@ export default {
         }
       })
     },
-    closeModalPrograma(){
+    closeModalPrograma() {
       this.currentProps = null
       this.currentView = null
     }
@@ -87,6 +132,13 @@ export default {
 /* ENCABEZADO */
 .header-programa {
   background: linear-gradient(135deg, #6a11cb, #2575fc);
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.header-alerta {
+  background: linear-gradient(135deg, #8861b1, #557abb);
   border-bottom-left-radius: 20px;
   border-bottom-right-radius: 20px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
