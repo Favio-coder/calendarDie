@@ -49,6 +49,7 @@ class CuentaController extends Controller
         try {
             $data = DB::select('
                     SELECT 
+                        u.c_usuario,
                         u.l_nombre, 
                         u.l_apellido, 
                         u.c_rol, 
@@ -60,14 +61,17 @@ class CuentaController extends Controller
                         mi.l_linkedin,
                         NULL AS c_estudiante,
                         NULL AS c_carrera,
-                        NULL AS c_facultad
+                        NULL AS c_facultad,
+                        NULL AS c_equipo,
+                        NULL AS l_equipo
                     FROM usuario AS u
                     INNER JOIN MentorInvitado AS mi ON u.c_usuario = mi.c_usuario
-                    WHERE mi.c_mentorCreador =:id_mentorCreador
+                    WHERE mi.c_mentorCreador = :id_mentorCreador
 
                     UNION ALL
 
                     SELECT 
+                        u.c_usuario,
                         u.l_nombre, 
                         u.l_apellido, 
                         u.c_rol, 
@@ -79,10 +83,15 @@ class CuentaController extends Controller
                         NULL AS l_linkedin,
                         e.c_estudiante, 
                         e.c_carrera,
-                        c.c_facultad
+                        c.c_facultad,
+                        ed.c_equipo,
+                        eq.l_equipo
                     FROM usuario AS u
                     INNER JOIN Estudiante AS e ON u.c_usuario = e.c_usuario
-                    INNER JOIN Carrera AS c ON e.c_carrera = c.c_carrera', ["id_mentorCreador" => $request->c_usuario]);
+                    INNER JOIN Carrera AS c ON e.c_carrera = c.c_carrera
+                    LEFT JOIN EquipoDet AS ed ON ed.c_estudiante = e.c_estudiante
+                    LEFT JOIN Equipo AS eq ON ed.c_equipo = eq.c_equipo
+                    ', ["id_mentorCreador" => $request->c_usuario]);
 
             return response()->json([
                 'success' => true,
@@ -158,7 +167,7 @@ class CuentaController extends Controller
             'contrasena' => 'required',
             'rol' => 'required|in:1,2,3',
             'fechaNacimiento' => 'required|date',
-            'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:2048' 
+            'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:2048'
         ];
 
         if ($request->rol == 2) {
@@ -194,9 +203,9 @@ class CuentaController extends Controller
         if ($request->hasFile('foto')) {
             $foto = $request->file('foto');
             $nombreFoto = uniqid() . '_' . $foto->getClientOriginalName();
-            
+
             $foto->move(public_path('fotos_usuarios'), $nombreFoto);
-            $fotoRuta = 'fotos_usuarios/' . $nombreFoto; 
+            $fotoRuta = 'fotos_usuarios/' . $nombreFoto;
         }
         try {
             $resultado = DB::select('EXEC proCrearCuenta 
@@ -212,19 +221,19 @@ class CuentaController extends Controller
                         :descripcionMentor, 
                         :linkedin, 
                         :fotoPerfil', [
-                        'rol' => $request->rol,
-                        'nombre' => $request->nombre,
-                        'apellido' => $request->apellido,
-                        'fechaNacimiento' => $request->fechaNacimiento,
-                        'correo' => $request->correo,
-                        'contrasena' => $request->contrasena,
-                        'codigoEstudiante' => $request->codigoEstudiante,
-                        'idCarrera' => $request->carrera,
-                        'idMentorCreador' => $request->creador,
-                        'descripcionMentor' => $request->descripcion ?? '',
-                        'linkedin' => $request->linkedin ?? '', 
-                        'fotoPerfil' => $fotoRuta ?? ''
-                    ]);
+                'rol' => $request->rol,
+                'nombre' => $request->nombre,
+                'apellido' => $request->apellido,
+                'fechaNacimiento' => $request->fechaNacimiento,
+                'correo' => $request->correo,
+                'contrasena' => $request->contrasena,
+                'codigoEstudiante' => $request->codigoEstudiante,
+                'idCarrera' => $request->carrera,
+                'idMentorCreador' => $request->creador,
+                'descripcionMentor' => $request->descripcion ?? '',
+                'linkedin' => $request->linkedin ?? '',
+                'fotoPerfil' => $fotoRuta ?? ''
+            ]);
 
 
             return response()->json([
@@ -241,4 +250,6 @@ class CuentaController extends Controller
             ], 500);
         }
     }
+
+    function eliminarCuenta(Request $request) {}
 }

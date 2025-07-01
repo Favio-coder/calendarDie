@@ -8,10 +8,53 @@ window.axios = axios;
 
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
+let requestCount = 0;
+
+function showLoader() {
+  const loader = document.getElementById('global-loader');
+  if (loader) loader.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+
+}
+
+function hideLoader() {
+  const loader = document.getElementById('global-loader');
+  if (loader) loader.style.display = 'none';
+  document.body.style.overflow = '';
+
+}
+
+function startRequest() {
+  requestCount++;
+  showLoader();
+}
+
+function endRequest() {
+  requestCount--;
+  if (requestCount <= 0) {
+    requestCount = 0;
+    hideLoader();
+  }
+}
+
+// Interceptores de solicitud
+window.axios.interceptors.request.use(config => {
+  startRequest();
+  return config;
+}, error => {
+  endRequest();
+  return Promise.reject(error);
+});
+
+
 // Interceptor para manejar errores
 window.axios.interceptors.response.use(
-  response => response,
+  response => {
+    endRequest();
+    return response;
+  },
   error => {
+    endRequest();
     if (error.response) {
       // Error 422: Validación
       if (error.response.status === 422) {

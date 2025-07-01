@@ -50,6 +50,7 @@
 import Swal from 'sweetalert2';
 import axios from 'axios';
 
+
 export default {
   data() {
     return {
@@ -70,16 +71,36 @@ export default {
       })
         .then(response => {
           if (response.data.success) {
-            this.$store.dispatch('guardarUsuario', response.data.usuario)
+            this.$store.dispatch('guardarUsuario', response.data.usuario);
 
-            Swal.fire({
-              title: "Login exitoso",
-              text: "¡Bienvenido!",
-              icon: "success",
-              confirmButtonColor: "#12BACA",
-            }).then(
-              () => {window.location.href = '/inicio'}
-            )
+            // 🟦 Obtener los programas antes de continuar
+            axios.get('/listProgramas')
+              .then(programasResponse => {
+                console.log("Estos son response: ", programasResponse)
+                const programas = programasResponse.data.programas || [];
+                console.log("Estos son programas: ", programas)
+                this.$store.dispatch('guardarProgramas', programasResponse.data.programas );
+                console.log("Store luego de guardar:", this.$store.state.programas)
+
+                // ✅ Solo después de obtener los programas, mostrar mensaje y redirigir
+                Swal.fire({
+                  title: "Login exitoso",
+                  text: "¡Bienvenido!",
+                  icon: "success",
+                  confirmButtonColor: "#12BACA",
+                  confirmButtonText: "Ingresar"
+                }).then(() => {
+                  window.location.href = '/inicio';
+                });
+              })
+              .catch(() => {
+                Swal.fire({
+                  title: "Error",
+                  text: "No se pudo cargar los recursos",
+                  icon: "error",
+                  confirmButtonColor: "#d33",
+                });
+              });
 
           } else {
             Swal.fire({
@@ -90,6 +111,15 @@ export default {
             });
           }
         })
+        .catch(() => {
+          Swal.fire({
+            title: "Error",
+            text: "Ocurrió un error al intentar iniciar sesión.",
+            icon: "error",
+            confirmButtonColor: "#d33",
+          });
+        });
+
     }
   }
 };

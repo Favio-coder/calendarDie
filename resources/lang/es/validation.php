@@ -9,7 +9,9 @@ return [
     'attributes' => [
         'correo' => 'Correo electrónico',
         'contrasena' => 'Contraseña',
-        'creador'=>'Mentor creador'
+        'creador'=>'Mentor creador',
+        'nombreRecurso' => 'Nombre del Recurso',
+        'descripcionRecurso' => 'Descripción de recurso'
     ],
     'unique' => 'El campo :attribute ya fue registrado antes'
 ];

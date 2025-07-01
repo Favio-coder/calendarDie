@@ -1,7 +1,11 @@
 <template>
   <div class="main-container">
     <Header />
-
+    <!-- Encabezado llamativo -->
+      <div class="agenda-header text-white text-center py-3">
+        <h2 class="display-5 fw-bold mb-1">📅 Agenda de Actividades</h2>
+        <p class="lead">Consulta y programa eventos en tu calendario del ecosistema</p>
+      </div>
     <div class="content">
       <!-- Calendario: 70% ancho -->
       <div ref="calendar" class="calendar"></div>
@@ -76,7 +80,12 @@ export default {
           id: '1',
           title: 'Reunión inicial',
           start: new Date().toISOString().slice(0, 10)
-        }
+        },
+        {
+          id: '2',
+          title: 'Reunión inicial',
+          start: new Date().toISOString().slice(0, 10)
+        },
       ],
       diaSeleccionado: null,
       diaSeleccionadoText: null,
@@ -222,4 +231,12 @@ body {
   color: white;
   border: none;
 }
+
+.agenda-header {
+  background: linear-gradient(135deg, #1E3C72, #2A5298);
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
 </style>
