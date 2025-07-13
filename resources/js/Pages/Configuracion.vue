@@ -68,10 +68,15 @@
             🧩
             <span>Asignar programa</span>
           </div>
+          <div class="action-box" @click="abrirModalCrearPrograma()">
+            🛠️
+            <span>Crear programa</span>
+          </div>
           <div class="action-box" @click="abrirModalEstadistica()">
             📊
             <span>Estadísticas</span>
           </div>
+          
         </div>
 
       </div>
@@ -228,6 +233,9 @@ export default {
           this.$refs.modalRef.openModal();
         }
       });
+    },
+    abrirModalCrearPrograma(){
+      alert("Crear programa")
     },
     cerrarModalAsignProgram() {
       this.currentProps = null;

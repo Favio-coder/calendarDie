@@ -6,7 +6,8 @@
       <div class="modal-dialog " style="max-width: 900px;">
         <div class="modal-content modal-sombra">
           <div class="modal-header titulo-agend-actividad">
-            <h5 class="modal-title text-white">Agregar Equipo</h5>
+            <h5 v-if="!q_editar" class="modal-title text-white">Agregar Equipo</h5>
+            <h5 v-else class="modal-title text-white">Editar Equipo</h5>
             <button type="button" class="btn-close" @click="closeModal"></button>
           </div>
 
@@ -68,7 +69,10 @@
                         </div>
                       </td>
                       <td>
-                        <button @click="elimEstxEquipo(est)" class="btn btn-danger btn-sm">
+                        <button v-if="!q_editar"  @click="elimEstxEquipo(est)" class="btn btn-danger btn-sm">
+                          <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                         <button v-else @click="elimEstxEquipoTotal(est)" class="btn btn-danger btn-sm">
                           <i class="fa-solid fa-trash-can"></i>
                         </button>
                       </td>
@@ -89,12 +93,14 @@
 
           <div class="modal-footer">
             <button class="btn btn-danger" @click="closeModal">Cerrar</button>
-            <button class="btn btn-crear-cuenta" @click="grabNuevoEquipo()">Crear equipo</button>
+            <button v-if="!q_editar" class="btn btn-crear-cuenta" @click="grabNuevoEquipo()">Crear equipo</button>
+            <button v-else class="btn btn-crear-cuenta" @click="editarEquipo()">Guardar cambios</button>
           </div>
         </div>
       </div>
     </div>
-    <component :is="currentView" ref="modalRef" v-bind="currentProps" @agregar-estudiante="agregarEstxEquipo" @close-modalEquipo="cerrarModalEquipo">
+    <component :is="currentView" ref="modalRef" v-bind="currentProps" @agregar-estudiante="agregarEstxEquipo"
+      @close-modalEquipo="cerrarModalEquipo">
     </component>
   </div>
 </template>
@@ -112,6 +118,16 @@ export default {
   components: {
     ModalAgregarEst
   },
+  props: {
+    equipoProp: {
+      type: Object,
+      required: false
+    },
+    tipoEquipoProp: {
+      type: String,
+      required: false
+    }
+  },
   data() {
     return {
       isModalOpen: false,
@@ -119,6 +135,7 @@ export default {
       estudiantes: [],
       carreras: [],
       estudiantesEquipo: [],
+      eliminados: [],
       form: {
         nombreEquipo: '',
         descripcionEquipo: '',
@@ -127,7 +144,8 @@ export default {
       preview: null,
       defaultImage: 'https://www.shutterstock.com/image-vector/image-icon-trendy-flat-style-600nw-643080895.jpg',
       currentView: null,
-      currentProps: null
+      currentProps: null,
+      q_editar: false
     }
   },
   computed: {
@@ -139,30 +157,49 @@ export default {
     }
   },
   mounted() {
-    axios.get('/obtenerEstudiantesXcarrera')
-      .then(response => {
-        this.estudiantes = response.data.estudiantes
-        // Extraer c_carrera y l_carrera únicos
-        const carrerasUnicas = []
-        const mapaCarreras = new Map()
+    console.log("Este prop se va pasar uu: ", this.equipoProp)
+    
+    const esEdicion = this.tipoEquipoProp === 'editarEquipo'
 
-        response.data.estudiantes.forEach(est => {
+    if (esEdicion) {
+      this.q_editar = true
+      this.preview = this.equipoProp.l_logoEquipo
+      this.form.nombreEquipo = this.equipoProp.l_equipo
+      this.form.descripcionEquipo = this.equipoProp.l_descripEquipo
+    }
+
+    axios.get('/obtenerEstudiantesXcarrera')
+      .then(res => {
+        const estudiantes = res.data.estudiantes
+        this.estudiantes = estudiantes       
+
+        if (!esEdicion) return
+
+        const mapaCarreras = new Map()
+        this.carreras = estudiantes.reduce((acc, est) => {
           if (!mapaCarreras.has(est.c_carrera)) {
             mapaCarreras.set(est.c_carrera, est.l_carrera)
-            carrerasUnicas.push({
-              c_carrera: est.c_carrera,
-              l_carrera: est.l_carrera
-            });
+            acc.push({ c_carrera: est.c_carrera, l_carrera: est.l_carrera })
           }
-        });
+          return acc
+        }, [])
 
-        this.carreras = carrerasUnicas;
+        if (Array.isArray(this.equipoProp.integrantes)) {
+          const mapaLideres = new Map(
+            this.equipoProp.integrantes.map(i => [i.c_usuario, i.q_lider])
+          )
+
+          this.estudiantesEquipo = estudiantes
+            .filter(e => mapaLideres.has(e.c_usuario))
+            .map(e => ({
+              ...e,                       
+              q_lider: mapaLideres.get(e.c_usuario) 
+            }))
+        }
+
       })
-      .catch(err => {
-        console.error("Existe este error: ", err);
-      });
-
-
+      .catch(err => console.error('Error:', err))
+      .finally(() => (this.isLoading = false))
   },
   methods: {
     cerrarModalEquipo() {
@@ -246,12 +283,44 @@ export default {
         }
       });
     },
+     editarEquipo () {
+        Swal.fire({
+          title: 'Mensaje',
+          text:  'Se editará este equipo, ¿estás seguro?',
+          icon:  'question',
+          showCancelButton: true,
+          confirmButtonText: 'Editar equipo',
+          cancelButtonText:  'Cancelar'
+        }).then(res => {
+          if (!res.isConfirmed) return
 
+          const fd = new FormData()
+          fd.append('c_equipo', this.equipoProp.c_equipo)
+          fd.append('nombreEquipo',this.form.nombreEquipo)
+          fd.append('descripcionEquipo',this.form.descripcionEquipo)
+          fd.append('estudiantes', JSON.stringify(this.estudiantesEquipo));
+          fd.append('estudiantesEliminar', JSON.stringify(this.eliminados))
+          fd.append('logoActual', this.equipoProp.l_logoEquipo) 
+
+          const file = this.$refs.logoEquipoInput?.files[0]
+          if (file) fd.append('logo', file)
+
+          axios.post('/editEquipo', fd, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          })
+          .then(() => {
+            Swal.fire('¡Actualizado!', 'El equipo fue modificado.', 'success')
+              .then(() => { this.closeModal(); this.resetFormulario() })
+          })
+          
+        })
+      },
     abrirModalAgregarEst() {
       this.currentView = ModalAgregarEst
       this.currentProps = {
         estudiantesProp: this.estudiantes,
-        carrerasProp: this.carreras
+        carrerasProp: this.carreras,
+        estudiantesEquipo: this.estudiantesEquipo
       };
       nextTick(() => {
         if (this.$refs.modalRef && this.$refs.modalRef.openModal) {
@@ -270,8 +339,20 @@ export default {
       this.$refs.modalRef?.recibirEstudianteDevuelto(est)
       //this.abrirModalAgregarEst()
     },
+    elimEstxEquipoTotal(est) {
+      this.estudiantesEquipo = this.estudiantesEquipo.filter(e => e.c_usuario !== est.c_usuario)
+      this.$refs.modalRef?.recibirEstudianteDevuelto(est)
+
+      this.eliminados.push(est)
+    },
     asignarLider(estSeleccionado) {
+      const yaEsLider = estSeleccionado.q_lider == "1";
+
       this.estudiantesEquipo = this.estudiantesEquipo.map(est => {
+        if (yaEsLider && est.c_usuario === estSeleccionado.c_usuario) {
+          return { ...est, q_lider: "0" };
+        }
+
         return {
           ...est,
           q_lider: est.c_usuario === estSeleccionado.c_usuario ? "1" : "0"
