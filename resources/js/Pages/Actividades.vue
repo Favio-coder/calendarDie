@@ -80,12 +80,7 @@ export default {
           id: '1',
           title: 'Reunión inicial',
           start: new Date().toISOString().slice(0, 10)
-        },
-        {
-          id: '2',
-          title: 'Reunión inicial',
-          start: new Date().toISOString().slice(0, 10)
-        },
+        }
       ],
       diaSeleccionado: null,
       diaSeleccionadoText: null,

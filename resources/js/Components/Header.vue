@@ -11,8 +11,8 @@
       <!-- Ítems de menú -->
       <div class="d-flex align-items-center">
         <a class="nav-link mx-4 custom-hover" href="/inicio">Inicio</a>
-        <a v-if="!q_autorizacion" class="nav-link mx-4 custom-hover" href="/actividades">Actividades</a>
-        <a  class="nav-link mx-4 custom-hover" href="/programas">Programas</a>
+        <!-- <a v-if="!q_autorizacion" class="nav-link mx-4 custom-hover" href="/actividades">Actividades</a> -->
+        <a class="nav-link mx-4 custom-hover" href="/programas">Programas</a>
         <a v-if="!q_autorizacion" class="nav-link mx-4 custom-hover" href="/recursos">Recursos</a>
         <a class="nav-link mx-4 custom-hover" href="#">Concursos</a>
         <a v-if="!q_autorizacion" class="nav-link mx-4 custom-hover" href="/configuracion">Configuración</a>
@@ -32,11 +32,11 @@
         </div>
 
         <!-- Botón notificaciones -->
-        <button type="button" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-custom-class="custom-tooltip"
+        <!-- <button type="button" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-custom-class="custom-tooltip"
           data-bs-title="Notificaciones" class="btn btn-link position-relative me-3" @click="mostrareNotificaciones"
           ref="btnNoti">
           <i class="fas fa-bell custom-icon"></i>
-        </button>
+        </button> -->
 
         <!-- Nombre del usuario -->
         <span class="mx-3 custom-hover" style="cursor: pointer;">{{ usuario?.l_nombre }} {{ usuario?.l_apellido
@@ -45,9 +45,11 @@
         <!-- Imagen o ícono de perfil -->
         <div @click="togglePerfil" style="cursor: pointer;" data-bs-toggle="tooltip" data-bs-placement="bottom"
           data-bs-custom-class="custom-tooltip" data-bs-title="Perfil" ref="perfilTooltip">
-          <img v-if="usuario.l_fotoPerfil" :src="fotoPerfilURL" alt="Foto de perfil" class="rounded-circle"
+          <img v-if="usuario && usuario?.l_fotoPerfil" :src="fotoPerfilURL" alt="Foto de perfil" class="rounded-circle"
             style="width: 40px; height: 40px;" />
+
           <i v-else class="fas fa-user-circle fa-3x text-secondary"></i>
+
         </div>
 
         <!-- Panel de perfil -->
@@ -66,7 +68,7 @@ import { mapGetters } from 'vuex'
 import '@fortawesome/fontawesome-free/css/all.css'
 import ModalEditarCuenta from './ModalEditarCuenta.vue'
 import ModalCrearCuentaConf from './ModalCrearCuentaConf.vue'
-
+import axios from 'axios'
 import { nextTick } from 'vue'
 
 export default {
@@ -89,11 +91,11 @@ export default {
     ...mapGetters(['usuario']),
 
     fotoPerfilURL() {
-            // Si ya tiene foto, retornarla como URL completa, si no usar imagen por defecto
-            return this.usuario.l_fotoPerfil
-            ? `http://localhost:8000/${this.usuario.l_fotoPerfil}`
-            : this.defaultImage;
-        }
+      // Si ya tiene foto, retornarla como URL completa, si no usar imagen por defecto
+      return this.usuario.l_fotoPerfil
+        ? `http://localhost:8000/${this.usuario.l_fotoPerfil}`
+        : this.defaultImage;
+    }
   },
   mounted() {
     if (this.usuario.c_rol !== '1') {
@@ -136,10 +138,14 @@ export default {
       });
     },
     cerrarSesion() {
-      window.location.href = '/acceso'
-      localStorage.removeItem('usuario')
-      this.$store.commit('setUsuario', null)
-      //window.location.href = '/acceso'
+      axios.post('/logout')
+        .then(() => {
+          this.$store.commit('setUsuario', null)
+          window.location.href = '/acceso'
+        })
+        .catch(err => {
+          console.error('Error cerrando sesión', err)
+        })
     },
     irInicio() {
       window.location.href = '/inicio'

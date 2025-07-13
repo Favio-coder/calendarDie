@@ -149,12 +149,26 @@ export default {
         c_programa
       };
 
-      this.isLoading = true;
+      Swal.fire({
+        title: '¿Estás seguro?',
+        text: 'Eliminarás esta sesión. Esta acción no se puede deshacer.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'No, cancelar',
+        reverseButtons: true
+      }).then((result) => {
+        if (result.isConfirmed) {
+          this.isLoading = true;
 
-      axios.post('/elimSesion', dataEnviar).then(() => {
-        this.cargarSesiones(); // 🔁 recargar sesiones después de eliminar
-      }).catch(() => {
-        this.isLoading = false;
+          axios.post('/elimSesion', dataEnviar).then(() => {
+            this.cargarSesiones(); // 🔁 recargar sesiones después de eliminar
+            Swal.fire('¡Eliminado!', 'La sesión ha sido eliminada.', 'success');
+          }).catch(() => {
+            this.isLoading = false;
+            Swal.fire('Error', 'No se pudo eliminar la sesión.', 'error');
+          });
+        }
       });
     },
     abrirModalSesion(sesion) {

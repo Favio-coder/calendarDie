@@ -119,6 +119,94 @@ class EquipoController extends Controller
         }
     }
 
+    function editEquipo(Request $request){
+        $validator = Validator::make($request->all(), [
+            'c_equipo' => 'required|string',
+            'nombreEquipo' => 'required|string',
+            'descripcionEquipo' => 'required|string',
+            'estudiantes' => 'required|string',
+            'estudiantesEliminar'=> 'required|string',
+            'logo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'logoActual' => 'nullable|string'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $estudiantes = json_decode($request->input('estudiantes'), true);
+
+        // Validar que es un array y no nulo
+        if (!is_array($estudiantes)) {
+            return response()->json([
+                'errors' => [
+                    'estudiantes' => ['Error interno al decodificar estudiantes.']
+                ]
+            ], 422);
+        }
+
+        // Validar que no esté vacío
+        if (empty($estudiantes)) {
+            return response()->json([
+                'errors' => [
+                    'estudiantes' => ['Debe incluir al menos un estudiante.']
+                ]
+            ], 422);
+        }
+
+        // Validar líder
+        $tieneLider = collect($estudiantes)->contains(function ($e) {
+            return isset($e['q_lider']) && $e['q_lider'] == 1;
+        });
+
+        if (!$tieneLider) {
+            return response()->json([
+                'errors' => [
+                    'estudiantes' => ['Debe haber al menos un estudiante como líder.']
+                ]
+            ], 422);
+        }
+
+        $logoRuta = $request->input('logoActual'); 
+
+        if ($request->hasFile('logo')) {
+            $logoAnterior = $request->input('logoActual');
+            if ($logoAnterior && file_exists(public_path($logoAnterior))) {
+                @unlink(public_path($logoAnterior));
+            }
+
+            // 2) Guardar el nuevo logo
+            $nuevoLogo   = $request->file('logo');
+            $nombreLogo  = uniqid() . '_' . $nuevoLogo->getClientOriginalName();
+            $nuevoLogo->move(public_path('logos_equipo'), $nombreLogo);
+
+            $logoRuta = 'logos_equipo/' . $nombreLogo; 
+        }
+
+        try {
+            // Ejecutar el procedimiento almacenado
+            DB::statement(
+            'EXEC proEditarEquipo ?, ?, ?, ?, ?, ?',
+            [
+                $request->input('c_equipo'),            
+                $request->input('nombreEquipo'),         
+                $request->input('descripcionEquipo'),    
+                $logoRuta ?? '',                        
+                $request->input('estudiantesEliminar'),  
+                $request->input('estudiantes')          
+                ]
+            );
+
+            return response()->json(['mensaje' => 'Equipo editado correctamente.'], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Error al editar el equipo.',
+                'detalle' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
     function listEquipo(){
         try {
             $Equipo = db::select(' 

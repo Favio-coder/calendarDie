@@ -85,7 +85,8 @@ export default {
     name: 'ModalAgregarEst',
     props: {
         estudiantesProp: Array,
-        carrerasProp: Array
+        carrerasProp: Array,
+        estudiantesEquipo: Array
     },
     data() {
         return {
@@ -166,6 +167,9 @@ export default {
         openModal() {
             this.isModalOpen = true;
             document.body.classList.add('modal-open');
+            // Actualiza con los props actuales
+            const equipoIds = this.estudiantesEquipo.map(e => e.c_usuario);
+            this.estudiantes = this.estudiantesProp.filter(e => !equipoIds.includes(e.c_usuario));
         },
         closeModal() {
             this.$emit('close-modalEquipo');

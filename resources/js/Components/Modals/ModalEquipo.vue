@@ -32,12 +32,19 @@
             <div class="scroll-contenedor" v-else>
               <div class="row">
                 <div v-for="item in equipos" :key="item.c_equipo" class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
-                  <div class="position-relative card shadow border-0 h-100">
+                  <div class="position-relative card shadow border-0 h-100" @dblclick="editarEquipo(item)">
                     <!-- Botón de eliminar -->
                     <button @click="eliminarEquipo(item)"
                       class="btn btn-light btn-sm position-absolute top-0 end-0 m-2 eliminar-btn"
                       title="Eliminar equipo">
                       <i class="fa-solid fa-xmark"></i>
+                    </button>
+
+                    <!-- Botón de imprimir-->
+                    <button @click="imprimirEquipo(item)"
+                      class="btn btn-light btn-sm position-absolute top-0 me-5 mt-2 end-0 imprimir-btn"
+                      title="Imprimir equipo">
+                      <i class="fa-solid fa-print"></i>
                     </button>
 
                     <!-- Imagen del equipo -->
@@ -60,7 +67,8 @@
         </div>
       </div>
     </div>
-    <component :is="currentView" ref="modalRef" v-bind="currentProps" @close-modalEquipo="cerrarModalEquipo" />
+    <component :is="currentView" ref="modalRef" v-bind="currentProps" @close-modalEquipo="cerrarModalEquipo"
+      @close-modalImpresion="cerrarModalImpresion" />
   </div>
 </template>
 
@@ -70,11 +78,14 @@ import ModalAgregarEquipo from './ModalAgregarEquipo.vue';
 import { nextTick } from 'vue';
 import axios from 'axios';
 import { mapGetters } from 'vuex';
+import ModalImpresion from '../layouts/ModalImpresion.vue';
+
+
 
 export default {
   name: 'ModalEquipo',
   components: {
-    ModalAgregarEquipo
+    ModalAgregarEquipo, ModalImpresion
   },
   data() {
     return {
@@ -117,6 +128,10 @@ export default {
       this.currentView = null
       this.currentProps = null
     },
+    cerrarModalImpresion() {
+      this.currentView = null
+      this.currentProps = null
+    },
     openModal() {
       this.isModalOpen = true;
       document.body.classList.add('modal-open');
@@ -126,6 +141,27 @@ export default {
       document.body.classList.remove('modal-open');
     },
     abrirModalCrearEquipo() {
+      this.currentView = ModalAgregarEquipo
+      nextTick(() => {
+        if (this.$refs.modalRef && this.$refs.modalRef.openModal) {
+          this.$refs.modalRef.openModal();
+        }
+      });
+    },
+    editarEquipo(equipo){
+      console.log("Este equipo se va editar: ", equipo)
+      this.currentView = ModalAgregarEquipo
+      this.currentProps = {
+        tipoEquipoProp: 'editarEquipo',
+        equipoProp: equipo
+      }
+      nextTick(() => {
+        if (this.$refs.modalRef && this.$refs.modalRef.openModal) {
+          this.$refs.modalRef.openModal();
+        }
+      });
+    },
+    cerrarModalImpresion() {
       this.currentView = ModalAgregarEquipo
       nextTick(() => {
         if (this.$refs.modalRef && this.$refs.modalRef.openModal) {
@@ -159,7 +195,25 @@ export default {
             })
         }
       })
-    }
+    },
+    imprimirEquipo(equipo) {
+      axios.post('/genPdfEquipo', { equipo }, { responseType: 'blob' })
+        .then(res => {
+          const blob = new Blob([res.data], { type: 'application/pdf' });
+          const url = URL.createObjectURL(blob);
+          this.currentView = ModalImpresion;
+          this.currentProps = { pdfBlobUrl: url };
+          this.$nextTick(() => {
+            if (this.$refs.modalRef && this.$refs.modalRef.openModal) {
+              this.$refs.modalRef.openModal();
+            }
+          });
+        })
+        .catch(err => {
+          console.error('Error generando PDF:', err);
+        });
+
+    },
   }
 }
 </script>
@@ -179,6 +233,7 @@ export default {
   width: 0px;
   background: transparent;
 }
+
 .scroll-contenedor {
   scrollbar-width: none;
 }
@@ -201,28 +256,46 @@ export default {
   gap: 10px;
   align-items: center;
 }
+
 .dot {
   width: 14px;
   height: 14px;
   border-radius: 50%;
   animation: bounce 0.6s infinite alternate;
 }
+
 .dot-blue {
   background-color: #12BACA;
 }
+
 .dot-yellow {
   background-color: #FFD700;
   animation-delay: 0.2s;
 }
+
 @keyframes bounce {
   from {
     transform: translateY(0);
   }
+
   to {
     transform: translateY(-10px);
   }
 }
-.btn-close{
+
+.btn-close {
   filter: invert(1) brightness(2);
+}
+
+.imprimir-btn {
+  transition: transform 0.2s ease, background-color 0.2s ease;
+  border-radius: 50%;
+}
+
+.imprimir-btn:hover {
+  transform: scale(1.2) rotate(-10deg);
+  background-color: #0d6efd !important;
+  /* Azul Bootstrap */
+  color: white;
 }
 </style>

@@ -25,7 +25,7 @@ BEGIN
         q_lider numeric(1,0)
     );
 
-    -- Parsear el JSON (requiere SQL Server 2016+)
+    -- Parsear el JSON 
     INSERT INTO #TempEstudiantes (c_usuario, c_estudiante, q_lider)
     SELECT 
         JSON_VALUE(value, '$.c_usuario'),

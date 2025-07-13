@@ -109,7 +109,7 @@
                                 <i class="fas fa-trash"></i>
                               </button>
                               <button v-if="tipoMod === 'estudiante' && usuario.q_enviado && usuario.c_matricula"
-                                class="btn btn-secondary btn-sm" @click="genPDF()">
+                                class="btn btn-secondary btn-sm" @click="genPDF(usuario)">
                                 <i class="fas fa-print"></i>
                               </button>
                             </div>
@@ -131,6 +131,8 @@
         </div>
       </div>
     </div>
+    <component :is="currentView" ref="modalRef" v-bind="currentProps" @close-modalImpresion="cerrarModalImpresion">
+    </component>
   </div>
 </template>
 
@@ -138,9 +140,13 @@
 import { mapGetters } from 'vuex';
 import Swal from 'sweetalert2';
 import axios from 'axios';
+import ModalImpresion from '../layouts/ModalImpresion.vue';
 
 export default {
   name: 'ModalAsignProgramDet',
+  components: {
+    ModalImpresion
+  },
   props: {
     tipoMod: { type: String, required: true },
     usuarios: { type: Array, required: true },
@@ -154,7 +160,9 @@ export default {
       filtro: '',
       filtroEquipo: '',
       filtroAsignados: '',
-      inscritosLocales: []
+      inscritosLocales: [],
+      currentView: null,
+      currentProps: null
     };
   },
   computed: {
@@ -302,6 +310,27 @@ export default {
 
           this.inscritosLocales.forEach(u => u.q_enviado = true);
         });
+    },
+    genPDF(usuario){
+      axios.post('/genPdfCompromiso', { usuario }, { responseType: 'blob' })
+        .then(res => {
+          const blob = new Blob([res.data], { type: 'application/pdf' });
+          const url = URL.createObjectURL(blob);
+          this.currentView = ModalImpresion;
+          this.currentProps = { pdfBlobUrl: url };
+          this.$nextTick(() => {
+            if (this.$refs.modalRef && this.$refs.modalRef.openModal) {
+              this.$refs.modalRef.openModal();
+            }
+          });
+        })
+        .catch(err => {
+          console.error('Error generando PDF:', err);
+        });
+    },
+    cerrarModalImpresion(){
+      this.currentProps=null
+      this.currentView=null
     },
     eliminarElemento(data) {
       Swal.fire({

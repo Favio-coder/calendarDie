@@ -6,6 +6,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Exception;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
+use App\Models\Usuario;
 
 class CuentaController extends Controller
 {
@@ -124,9 +127,8 @@ class CuentaController extends Controller
         }
 
         // Llamar al procedimiento almacenado
-        $resultado = DB::select('EXEC proLogin ?, ?', [
-            $request->correo,
-            $request->contrasena
+        $resultado = DB::select('EXEC proObtenerUsuario ?', [
+            $request->correo
         ]);
 
         // Si no hay resultados, credenciales incorrectas
@@ -136,6 +138,7 @@ class CuentaController extends Controller
                 'message' => 'Correo o contraseña incorrectos'
             ]);
         }
+
 
         // Si devuelve Resultado = 0, también es incorrecto
         if (isset($resultado[0]->Resultado) && $resultado[0]->Resultado == 0) {
@@ -147,7 +150,17 @@ class CuentaController extends Controller
 
         // Credenciales válidas, devolver datos del usuario
         $usuario = (array) $resultado[0];
-        unset($usuario['l_contrasena']); // Por seguridad, no devolver la contraseña
+
+        // Verificar Hash
+        if (!Hash::check($request->contrasena, $usuario['l_contrasena'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Correo o contraseña incorrectos'
+            ]);
+        }
+
+        Auth::loginUsingId($usuario['c_usuario']);
+        unset($usuario['l_contrasena']);
 
         return response()->json([
             'success' => true,
@@ -156,13 +169,32 @@ class CuentaController extends Controller
         ]);
     }
 
+    public function logout()
+    {
+        Auth::logout();
+        return response()->json([
+            'success' => true,
+            'message' => 'Sesión cerrada'
+        ]);
+    }
+
 
 
     public function registrarCuenta(Request $request)
     {
         $reglas = [
-            'nombre' => 'required|string|max:100',
-            'apellido' => 'required|string|max:100',
+            'nombre' => [
+                'required',
+                'string',
+                'max:100',
+                'regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/u'
+            ],
+            'apellido' => [
+                'required',
+                'string',
+                'max:100',
+                'regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/u'
+            ],
             'correo' => 'required|email|unique:Usuario,l_correoElectronico',
             'contrasena' => 'required',
             'rol' => 'required|in:1,2,3',
@@ -198,6 +230,9 @@ class CuentaController extends Controller
 
         //$data = $request->all();
 
+        //Hasheo de contraseña
+        $hashPassword = Hash::make($request->contrasena);
+        //dd($hashPassword);
         // Guardar imagen si existe
         $fotoRuta = null;
         if ($request->hasFile('foto')) {
@@ -226,7 +261,7 @@ class CuentaController extends Controller
                 'apellido' => $request->apellido,
                 'fechaNacimiento' => $request->fechaNacimiento,
                 'correo' => $request->correo,
-                'contrasena' => $request->contrasena,
+                'contrasena' => $hashPassword,
                 'codigoEstudiante' => $request->codigoEstudiante,
                 'idCarrera' => $request->carrera,
                 'idMentorCreador' => $request->creador,
@@ -251,5 +286,7 @@ class CuentaController extends Controller
         }
     }
 
-    function eliminarCuenta(Request $request) {}
+    function editarCuenta(Request $request) {
+        dd($request);
+    }
 }
