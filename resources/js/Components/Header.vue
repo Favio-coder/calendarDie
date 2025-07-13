@@ -11,7 +11,7 @@
       <!-- Ítems de menú -->
       <div class="d-flex align-items-center">
         <a class="nav-link mx-4 custom-hover" href="/inicio">Inicio</a>
-        <!-- <a v-if="!q_autorizacion" class="nav-link mx-4 custom-hover" href="/actividades">Actividades</a> -->
+        <a v-if="!q_autorizacion" class="nav-link mx-4 custom-hover" href="/actividades">Actividades</a>
         <a class="nav-link mx-4 custom-hover" href="/programas">Programas</a>
         <a v-if="!q_autorizacion" class="nav-link mx-4 custom-hover" href="/recursos">Recursos</a>
         <a class="nav-link mx-4 custom-hover" href="#">Concursos</a>

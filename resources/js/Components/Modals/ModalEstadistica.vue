@@ -29,6 +29,7 @@
                     </div>
 
                     <div class="modal-footer">
+                        <button class="btn btn-success" @click="exportToExcel">📊 Exportar a Excel</button>
                         <button class="btn btn-danger" @click="closeModal">Cerrar</button>
                     </div>
                 </div>
@@ -45,6 +46,8 @@ import { nextTick } from 'vue';
 import axios from 'axios';
 import { mapGetters } from 'vuex';
 import PieChart from '../Graficos/PieChart';
+import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 export default {
     name: 'ModalEstadistica',
@@ -95,12 +98,14 @@ export default {
                         label: 'Cantidad de Estudiantes',
                         data,
                         backgroundColor: [
-                            '#FF6384',
-                            '#36A2EB',
-                            '#FFCE56',
-                            '#4BC0C0',
-                            '#9966FF',
-                            '#FF9F40'
+                            '#FF6633', '#FFB399', '#FF33FF', '#FFFF99', '#00B3E6',
+                            '#E6B333', '#3366E6', '#999966', '#99FF99', '#B34D4D',
+                            '#80B300', '#809900', '#E6B3B3', '#6680B3', '#66991A',
+                            '#FF99E6', '#CCFF1A', '#FF1A66', '#E6331A', '#33FFCC',
+                            '#66994D', '#B366CC', '#4D8000', '#B33300', '#CC80CC',
+                            '#66664D', '#991AFF', '#E666FF', '#4DB3FF', '#1AB399',
+                            '#E666B3', '#33991A', '#CC9999', '#B3B31A', '#00E680',
+                            '#4D8066', '#809980', '#E6FF80', '#1AFF33', '#999933'
                         ]
                     }
                 ]
@@ -114,7 +119,67 @@ export default {
             this.$emit('close-modalEstadistica');
             this.isModalOpen = false;
             document.body.classList.remove('modal-open');
+        },
+        async exportToExcel() {
+            const wb = new ExcelJS.Workbook();
+            const ws = wb.addWorksheet('Estadísticas');
+
+            ws.mergeCells('A1:B1');
+            ws.getCell('A1').value = 'Estadística de Estudiantes por Carrera';
+            ws.getCell('A1').font = { bold: true, size: 14 };
+            ws.getCell('A1').alignment = { horizontal: 'center' };
+
+            ws.getRow(3).values = ['Carrera', 'Cantidad de Estudiantes'];
+            ws.getRow(3).eachCell(cell => {
+                cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+                cell.fill = {
+                    type: 'pattern',
+                    pattern: 'solid',
+                    fgColor: { argb: 'FF1F497D' }   
+                };
+                cell.alignment = { horizontal: 'center' };
+                cell.border = {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                };
+            });
+
+
+            const dataRows = this.estadisticas.map(item => [
+                item.NombreCarrera,
+                item.CantidadEstudiantes
+            ]);
+            ws.addRows(dataRows);
+
+            const startRow = 4;
+            const endRow = startRow + dataRows.length - 1;
+            for (let r = startRow; r <= endRow; r++) {
+                ws.getRow(r).eachCell(cell => {
+                    cell.border = {
+                        top: { style: 'thin' },
+                        left: { style: 'thin' },
+                        bottom: { style: 'thin' },
+                        right: { style: 'thin' }
+                    };
+                    if (cell.col === 2) cell.alignment = { horizontal: 'center' };
+                });
+            }
+
+            ws.columns = [
+                { key: 'carrera', width: 40 },
+                { key: 'cantidad', width: 20 }
+            ];
+
+            const buffer = await wb.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'EstadisticasEstudiantes.xlsx';
+            link.click();
         }
+
     }
 };
 </script>

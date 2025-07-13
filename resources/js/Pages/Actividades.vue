@@ -2,28 +2,29 @@
   <div class="main-container">
     <Header />
     <!-- Encabezado llamativo -->
-      <div class="agenda-header text-white text-center py-3">
-        <h2 class="display-5 fw-bold mb-1">📅 Agenda de Actividades</h2>
-        <p class="lead">Consulta y programa eventos en tu calendario del ecosistema</p>
-      </div>
+    <div class="agenda-header text-white text-center py-3">
+      <h2 class="display-5 fw-bold mb-1">📅 Agenda de Actividades</h2>
+      <p class="lead">Consulta y programa eventos en tu calendario del ecosistema</p>
+    </div>
     <div class="content">
       <!-- Calendario: 70% ancho -->
       <div ref="calendar" class="calendar"></div>
 
       <!-- Panel lateral: 30% ancho -->
       <div class="sidebar">
+        <div style="display: flex; justify-content: center; align-items: center;">
+          <button class="items-center button-agendar" @click="agregarEvento()">
+            <i class="fas fa-plus"></i> Agendar actividad
+          </button>
+        </div>
+
+
+
         <div v-if="diaSeleccionado">
           <h3>{{ diaSeleccionadoText }}</h3>
         </div>
         <div v-else>
           <h4>Selecciona una fecha en el calendario</h4>
-        </div>
-
-        <!-- Sección de boton -->
-        <div style="display: flex; justify-content: center; align-items: center;">
-          <button class="items-center button-agendar" @click="agregarEvento()">
-            <i class="fas fa-plus"></i> Agendar actividad
-          </button>
         </div>
 
 
@@ -32,29 +33,42 @@
         </div>
 
         <div v-if="diaSeleccionado">
-          <ul>
-            <li v-for="event in eventsFordiaSeleccionado" :key="event.id">
-              {{ event.title }} — {{ event.start.slice(0, 10) }}
-              <button @click="removeEvent(event.id)" style="margin-left: 0.5rem; color: red;">Eliminar</button>
+          <ul class="list-unstyled">
+            <li v-for="event in eventsFordiaSeleccionado" :key="event.id" class="card shadow-sm mb-2 border-0">
+              <div class="card-body d-flex justify-content-between align-items-center"
+                @dblclick="handleDoubleClick(event.id)">
+                <div>
+                  <h6 class="mb-0 fw-bold">{{ event.title }}</h6>
+                  <span>Fecha: </span><small class="text-muted">{{ formatearFecha(event.start) }}</small>
+                  <br>
+                  <small class="text-muted">{{ event.extendedProps.usuario }}</small>
+                </div>
+                <button @click="removeEvent(event)" class="btn btn-sm btn-outline-danger">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
             </li>
-            <li v-if="eventsFordiaSeleccionado.length === 0">No hay eventos para esta fecha</li>
+
+            <li v-if="eventsFordiaSeleccionado.length === 0" class="text-muted text-center mt-3">
+              No hay eventos para esta fecha
+            </li>
           </ul>
-
-
-
         </div>
+
       </div>
     </div>
-    <component :is="currentView" ref="modalRef" @cerrar-ModalAgendar="cerrarModalAgendar"></component>
+    <component :is="currentView" v-bind="currentProps" ref="modalRef" @cerrar-ModalAgendar="cerrarModalAgendar">
+    </component>
   </div>
 </template>
 
 <script>
-//Componentes Vue
-import Header from '@/components/Header.vue'
+import Header from '@/components/Header.vue';
 import Prueba from './Prueba.vue'
 import ModalAgendar from '../Components/ModalAgendar.vue'
 import { nextTick } from 'vue'
+import axios from 'axios'
+import Swal from 'sweetalert2';
 
 //Librerias
 import { Calendar } from '@fullcalendar/core'
@@ -75,13 +89,8 @@ export default {
   data() {
     return {
       calendar: null,
-      events: [
-        {
-          id: '1',
-          title: 'Reunión inicial',
-          start: new Date().toISOString().slice(0, 10)
-        }
-      ],
+      events: [],
+      actividades: [],
       diaSeleccionado: null,
       diaSeleccionadoText: null,
       newEventTitle: '',
@@ -97,6 +106,9 @@ export default {
     }
   },
   mounted() {
+    this.listEventos()
+
+
     this.calendar = new Calendar(this.$refs.calendar, {
       plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],
       initialView: 'dayGridMonth',
@@ -119,8 +131,7 @@ export default {
   },
   methods: {
     cerrarModalAgendar() {
-      console.log("Cerrar agendar")
-
+      this.listEventos()
       this.currentProps = null
       this.currentView = null
     },
@@ -140,9 +151,7 @@ export default {
       this.diaSeleccionado = selectionInfo.startStr
     },
     handleEventClick(clickInfo) {
-      if (confirm(`¿Eliminar evento "${clickInfo.event.title}"?`)) {
-        this.removeEvent(clickInfo.event.id)
-      }
+      this.handleDoubleClick(clickInfo.event.id)
     },
     agregarEvento() {
       this.currentView = ModalAgendar
@@ -152,11 +161,110 @@ export default {
         }
       })
     },
-    removeEvent(eventId) {
-      this.events = this.events.filter(e => e.id !== eventId)
-      const calendarEvent = this.calendar.getEventById(eventId)
-      if (calendarEvent) calendarEvent.remove()
+    handleDoubleClick(eventId) {
+      const actividad = this.actividades.find(a => a.c_actividad == eventId);
+      if (actividad) {
+        this.editarEvento(actividad);
+      }
+    },
+    editarEvento(actividad) {
+      this.currentView = ModalAgendar
+      this.currentProps = {
+        accionActividadProp: 'editarActividad',
+        actividadProp: actividad
+      }
+      nextTick(() => {
+        if (this.$refs.modalRef && this.$refs.modalRef.openModal) {
+          this.$refs.modalRef.openModal()
+        }
+      })
+    },
+    removeEvent(evento) {
+      // evento puede ser el objeto evento completo o solo el ID;
+      // ajustamos según tu llamada actual:
+      const eventId = typeof evento === 'object' ? evento.id : evento
+
+      Swal.fire({
+        title: '¿Eliminar actividad?',
+        text: 'Esta acción no se puede deshacer',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6'
+      }).then(result => {
+        if (result.isConfirmed) {
+
+          axios.post('/elimActividad', evento)
+            .then(() => {
+              // Quitar del arreglo local
+              this.events = this.events.filter(e => e.id !== eventId)
+
+              // Quitar del calendario FullCalendar
+              const calendarEvent = this.calendar.getEventById(eventId)
+              if (calendarEvent) calendarEvent.remove()
+
+              Swal.fire({
+                title: 'Eliminado',
+                text: 'La actividad fue eliminada.',
+                icon: 'success',
+                confirmButtonColor: '#12BACA'
+              })
+            })
+        }
+      })
+    },
+    formatearFecha(fechaStr) {
+      const fecha = new Date(fechaStr);
+      const dias = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+      const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+        'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+      const diaSemana = dias[fecha.getDay()];
+      const dia = fecha.getDate();
+      const mes = meses[fecha.getMonth()];
+      const anio = fecha.getFullYear();
+
+      return `${diaSemana} ${dia} de ${mes} del ${anio}`;
+    },
+    listEventos() {
+      axios.get('/listActividad').then(r => {
+        this.actividades = r.data.actividades
+        const rows = r.data.actividades;
+        const map = new Map();
+
+        rows.forEach(row => {
+          const fechaISO = `${row.l_diaActividad}T${row.l_horaActividad.substring(0, 5)}`;
+          if (!map.has(row.c_actividad)) {
+            map.set(row.c_actividad, {
+              id: row.c_actividad,
+              title: row.l_actividad,
+              start: fechaISO,
+              description: row.l_descripcion,
+              extendedProps: {
+                usuario: `${row.l_nombre} ${row.l_apellido}`,
+                recursos: [row.l_recurso]
+              }
+            });
+          } else {
+            map.get(row.c_actividad).extendedProps.recursos.push(row.l_recurso);
+          }
+        });
+
+        this.events = Array.from(map.values());
+
+        if (this.calendar) {
+          this.calendar.removeAllEvents();
+          this.calendar.getEventSources().forEach(src => src.remove());
+        }
+
+        if (this.calendar) {
+          this.calendar.addEventSource(this.events);
+        }
+      });
     }
+
   },
   beforeDestroy() {
     if (this.calendar) {
@@ -233,5 +341,4 @@ body {
   border-bottom-right-radius: 20px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
-
 </style>

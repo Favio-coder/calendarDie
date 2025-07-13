@@ -1,5 +1,5 @@
 IF OBJECT_ID('proCrearCuenta', 'P') IS NOT NULL
-    DROP PROCEDURE proLogin;
+    DROP PROCEDURE proCrearCuenta;
 GO
 
 GO
