@@ -73,7 +73,6 @@ export default {
           if (response.data.success) {
             this.$store.dispatch('guardarUsuario', response.data.usuario);
 
-            // 🟦 Obtener los programas antes de continuar
             axios.get('/listProgramas')
               .then(programasResponse => {
                 console.log("Estos son response: ", programasResponse)
@@ -82,7 +81,6 @@ export default {
                 this.$store.dispatch('guardarProgramas', programasResponse.data.programas );
                 console.log("Store luego de guardar:", this.$store.state.programas)
 
-                // ✅ Solo después de obtener los programas, mostrar mensaje y redirigir
                 Swal.fire({
                   title: "Login exitoso",
                   text: "¡Bienvenido!",

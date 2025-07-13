@@ -31,6 +31,21 @@ export default new Vuex.Store({
     setEquipos(state, payload) {
       state.equipos = payload;
       localStorage.setItem('equipos', JSON.stringify(payload));
+    },
+    quitarPrograma(state, idPrograma) {
+      state.programas = state.programas.filter(p => p.c_programa !== idPrograma)
+      localStorage.setItem('programas', JSON.stringify(state.programas))
+    },
+    quitarEquipo(state, idEquipo) {
+      state.equipos = state.equipos.filter(e => e.c_equipo !== idEquipo)
+      localStorage.setItem('equipos', JSON.stringify(state.equipos))
+    },
+    actualizarPrograma(state, programaActualizado) {
+      const index = state.programas.findIndex(p => p.c_programa === programaActualizado.c_programa);
+      if (index !== -1) {
+        Vue.set(state.programas, index, programaActualizado);
+        localStorage.setItem('programas', JSON.stringify(state.programas));
+      }
     }
   },
   actions: {
@@ -47,6 +62,15 @@ export default new Vuex.Store({
     },
     guardarEquipos({ commit }, equipos) {
       commit('setEquipos', equipos);
+    },
+    eliminarPrograma({ commit }, idPrograma) {
+      commit('quitarPrograma', idPrograma)
+    },
+    eliminarEquipo({ commit }, idEquipo) {
+      commit('quitarEquipo', idEquipo)
+    },
+    actualizarPrograma({ commit }, programaActualizado) {
+      commit('actualizarPrograma', programaActualizado);
     }
   },
   getters: {

@@ -26,8 +26,8 @@ export default {
   render(h) {
     return h(Pie, {
       props: {
-        chartData: this.chartData,
-        chartOptions: this.chartOptions
+        data: this.chartData,
+        options: this.chartOptions
       }
     });
   }

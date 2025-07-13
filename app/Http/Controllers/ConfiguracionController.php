@@ -31,12 +31,12 @@ class ConfiguracionController extends Controller
 
             return response()->json([
                 'estadisticas' => $est,
-                'mensaje' => 'Equipo registrado correctamente.'
+                'mensaje' => 'Estadísticas devueltas correctamente'
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'error' => true,
-                'mensaje' => 'Error al obtener estadisticas',
+                'mensaje' => 'Error al obtener estadísticas',
                 'detalle' => $e->getMessage()
             ], 500);
         }

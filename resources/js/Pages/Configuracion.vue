@@ -70,7 +70,7 @@
           </div>
           <div class="action-box" @click="abrirModalCrearPrograma()">
             🛠️
-            <span>Crear programa</span>
+            <span>Administrar programas</span>
           </div>
           <div class="action-box" @click="abrirModalEstadistica()">
             📊
@@ -83,7 +83,8 @@
     </div>
 
     <component :is="currentView" ref="modalRef" @close-modalCrearCuenta="cerrarModalCrearCuenta" v-bind="currentProps"
-      @close-modalEstadistica="cerrarModalEstadistica" @close-modalAsignProgram="cerrarModalAsignProgram" />
+      @close-modalEstadistica="cerrarModalEstadistica" @close-modalAsignProgram="cerrarModalAsignProgram" 
+      @cerrar-modalAdminProgram="cerrarModalCrearPrograma"/>
   </div>
 </template>
 
@@ -96,6 +97,7 @@ import { mapGetters } from 'vuex';
 import { nextTick } from 'vue';
 import ModalEstadistica from '../Components/Modals/ModalEstadistica.vue';
 import ModalAsignProgram from '../Components/Modals/ModalAsignProgram.vue';
+import ModalAdminProgramas from '../Components/Modals/ModalAdminProgramas.vue';
 import Swal from 'sweetalert2';
 
 export default {
@@ -104,7 +106,8 @@ export default {
     ModalCrearCuenta,
     ModalCrearCuentaConf,
     ModalEstadistica,
-    ModalAsignProgram
+    ModalAsignProgram,
+    ModalAdminProgramas
   },
   data() {
     return {
@@ -235,7 +238,16 @@ export default {
       });
     },
     abrirModalCrearPrograma(){
-      alert("Crear programa")
+      this.currentView = ModalAdminProgramas
+      nextTick(() => {
+        if (this.$refs.modalRef && this.$refs.modalRef.openModal) {
+          this.$refs.modalRef.openModal();
+        }
+      });
+    },
+    cerrarModalCrearPrograma(){
+      this.currentProps = null;
+      this.currentView = null;
     },
     cerrarModalAsignProgram() {
       this.currentProps = null;

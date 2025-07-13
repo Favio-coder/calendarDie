@@ -11,6 +11,7 @@ use App\Http\Controllers\SesionController;
 use App\Http\Controllers\ConfiguracionController;
 use App\Http\Controllers\PermisoController;
 use App\Http\Controllers\ImpresionController;
+use App\Http\Controllers\ActividadController;
 
 // Vistas renderizadas en VUE
 Route::get('/', function () {
@@ -88,6 +89,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/elimEquipo', [EquipoController::class, 'elimEquipo']);
     Route::post('/editEquipo', [EquipoController::class, 'editEquipo']);
 
+    //Modulo de actividades 
+    Route::get('/listActividad', [ActividadController::class, 'listActividad']);
+    Route::post('/grabActividad', [ActividadController::class, 'grabActividad']);
+    Route::post('/elimActividad', [ActividadController::class, 'elimActividad']);
 
     //Modulo de recurso 
     Route::get('/listRecursos', [RecursoController::class, 'listRecursos']);
@@ -99,6 +104,9 @@ Route::middleware(['auth'])->group(function () {
 
     //Modulo de programas 
     Route::get('/listProgramas', [ProgramaController::class, 'listProgramas']);
+    Route::post('/grabPrograma', [ProgramaController::class, 'grabPrograma']);
+    Route::post('/editPrograma', [ProgramaController::class, 'editPrograma']);
+    Route::post('/elimPrograma', [ProgramaController::class, 'elimPrograma']);
 
     //Modulo de sesión
     Route::post('/listSesionXprograma', [SesionController::class, 'listSesionXprograma']);

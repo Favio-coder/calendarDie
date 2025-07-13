@@ -1,258 +1,254 @@
 <template>
   <div>
-    <!-- Modal principal -->
-    <div class="modal fade" tabindex="-1" :class="{ show: isModalOpen }"
-      :style="{ display: isModalOpen ? 'block' : 'none' }" aria-modal="true" role="dialog" @click.self="closeModal">
+    <!-- MODAL -->
+    <div class="modal fade" :class="{ show: isModalOpen }" :style="{ display: isModalOpen ? 'block' : 'none' }"
+      aria-modal="true" role="dialog" @click.self="closeModal">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
-          <div class="modal-header titulo-agend-actividad">
-            <h5 class="modal-title text-white">Agendar Evento</h5>
-            <button type="button" class="btn-close" @click="closeModal"></button>
+          <!-- Header -->
+          <div class="modal-header text-white" style="background:#12BACA">
+            <h5 v-if="!q_edit" class="modal-title">Agendar Actividad</h5>
+            <h5 v-else class="modal-title">Actividad - {{ actividadProp.l_actividad }}</h5>
+            <button type="button" class="btn-close btn-close-white" @click="closeModal"></button>
           </div>
 
+          <!-- Body -->
           <div class="modal-body">
-            <div class="container-fluid">
-              <div class="row">
-
-                <!-- Columna izquierda -->
-                <div class="col-md-7">
-                  <div class="mb-3">
-                    <label>Nombre de la actividad:</label>
-                    <input type="text" class="form-control" placeholder="Inserte el nombre de la actividad">
-                  </div>
-
-                  <div class="mb-3">
-                    <label>Descripción de la actividad:</label>
-                    <textarea class="form-control" placeholder="Describe la actividad"></textarea>
-                  </div>
-
-                  <div class="mb-3 d-flex align-items-center">
-                    <label class="me-2">Responsable:</label>
-                    <input type="text" class="form-control me-3" disabled v-model="usuario.l_nombre"
-                      style="max-width: 250px;">
-                    <label class="me-2">Hora:</label>
-                    <input type="text" class="form-control" value="9:00 am" style="max-width: 120px;">
-                  </div>
-
-                  <!-- Invitaciones -->
-                  <div class="mb-3">
-                    <label>Invitaciones:</label>
-                    <!-- <div class="scroll-vertical">
-                      <div v-for="(inv, i) in invitaciones" :key="i" class="badge bg-secondary text-white d-block mb-1">
-                        {{ inv }}</div>
-                      <button class="btn btn-sm btn-outline-secondary mt-2"
-                        @click="mostrarPopup('invitacion')">+</button>
-                    </div> -->
-                  </div>
-
-                  <!-- Recursos y Etiquetas juntos -->
-                  <div class="mb-3 d-flex gap-4">
-                    <!-- Recursos -->
-                    <div class="flex-fill">
-                      <label>Recursos:</label>
-                      <!-- <div class="scroll-vertical">
-                        <div v-for="(rec, i) in recursos" :key="i" class="badge bg-info text-dark d-block mb-1">{{ rec
-                          }}</div>
-                        <button class="btn btn-sm btn-outline-secondary mt-2"
-                          @click="mostrarPopup('recurso')">+</button>
-                      </div> -->
-                    </div>
-
-                    <!-- Etiquetas -->
-                    <div class="flex-fill">
-                      <label>Etiquetas:</label>
-                      <div class="scroll-vertical">
-                        <div v-for="(etq, i) in etiquetas" :key="i" class="badge bg-success text-white d-block mb-1">{{
-                          etq }}</div>
-                        <button class="btn btn-sm btn-outline-secondary mt-2"
-                          @click="mostrarPopup('etiqueta')">+</button>
-                      </div>
-                    </div>
-                  </div>
-
-
-                  <div class="mb-3">
-                    <label>Recursos:</label>
-                    <div class="scroll-hidden d-flex gap-2 mt-1">
-                      <span v-for="(rec, i) in recursos" :key="i" class="badge bg-info text-dark">{{ rec }}</span>
-                      <button class="btn btn-sm btn-outline-secondary" @click="mostrarPopup('recurso')">+</button>
-                    </div>
-                  </div>
-
-                  <div class="mb-3">
-                    <label>Etiquetas:</label>
-                    <div class="scroll-hidden d-flex gap-2 mt-1">
-                      <span v-for="(etq, i) in etiquetas" :key="i" class="badge bg-success text-white">{{ etq }}</span>
-                      <button class="btn btn-sm btn-outline-secondary" @click="mostrarPopup('etiqueta')">+</button>
-                    </div>
-                  </div>
-
-                  <div class="mb-3">
-                    <label>Notas:</label>
-                    <textarea class="form-control" placeholder="Escribe unas notas"></textarea>
-                  </div>
-                </div>
-
-                <!-- Columna derecha -->
-                <div class="col-md-5">
-                  <div class="mb-3">
-                    <label>Fotografía referencial del evento</label>
-                    <div class="border rounded d-flex align-items-center justify-content-center"
-                      style="height: 150px; background-color: #f4f4f4;">
-                      Fotografía referencial del evento
-                    </div>
-                    <button class="btn btn-secondary btn-sm mt-2">
-                      📎 Adjuntar imagen
-                    </button>
-                  </div>
-
-                  <div class="mb-3">
-                    <label>Adjuntos:</label>
-                    <button class="btn btn-secondary btn-sm d-block">
-                      📎 Adjuntar archivos
-                    </button>
-                  </div>
-                </div>
-
+            <form @submit.prevent="guardarActividad">
+              <!-- Nombre / Descripción -->
+              <div v-if="!q_edit"  class="mb-3">
+                <label class="form-label">Nombre de la actividad</label>
+                <input v-model="form.l_actividad" type="text" class="form-control" />
               </div>
-            </div>
-          </div>
+              <div v-else  class="mb-3">
+                <label class="form-label">Nombre de la actividad</label>
+                <input v-model="form.l_actividad" type="text" class="form-control" disabled />
+              </div>
 
-          <div class="modal-footer">
-            <button class="btn btn-primary" @click="closeModal">Cerrar</button>
-          </div>
+              <div v-if="!q_edit" class="mb-3">
+                <label class="form-label">Descripción</label>
+                <textarea v-model="form.l_descripcion" class="form-control" rows="3"></textarea>
+              </div>
+              <div v-else class="mb-3">
+                <label class="form-label">Descripción</label>
+                <textarea v-model="form.l_descripcion" class="form-control" rows="3" disabled></textarea>
+              </div>
 
+              <!-- Día / Hora / Responsable -->
+              <div class="row">
+                <div v-if="!q_edit" class="col-md-4 mb-3">
+                  <label class="form-label">Día</label>
+                  <input v-model="form.l_diaActividad" type="date" class="form-control" />
+                </div>
+                <div v-else class="col-md-4 mb-3">
+                  <label class="form-label">Día</label>
+                  <input v-model="form.l_diaActividad" type="date" class="form-control" disabled />
+                </div>
+                <div v-if="!q_edit" class="col-md-3 mb-3">
+                  <label class="form-label">Hora</label>
+                  <input v-model="form.l_horaActividad" type="time" class="form-control"  />
+                </div>
+                <div v-else  class="col-md-3 mb-3">
+                  <label class="form-label">Hora</label>
+                  <input v-model="form.l_horaActividad" type="time" class="form-control" disabled />
+                </div>
+                <div class="col-md-5 mb-3">
+                  <label class="form-label">Responsable</label>
+                  <input v-if="!q_edit" :value="usuario.l_nombre" class="form-control" disabled />
+                  <input v-else :value="actividadProp.l_nombre" class="form-control" disabled />
+                </div>
+              </div>
+
+              <!-- Selector de recursos -->
+              <div class="mb-3">
+                <label v-if="!q_edit" class="form-label">Añadir recurso</label>
+                <div v-if="!q_edit" class="d-flex gap-2">
+                  <select v-model="recursoSeleccionado" class="form-select">
+                    <option value="" disabled>Seleccione…</option>
+                    <option v-for="rec in recursosDisponibles" :key="rec.c_recurso" :value="rec">
+                      {{ rec.l_recurso }}
+                    </option>
+                  </select>
+                  <button type="button" class="btn btn-outline-success" @click="agregarRecurso"
+                    :disabled="!recursoSeleccionado">
+                    ＋
+                  </button>
+                </div>
+              </div>
+
+              <!-- Tabla de recursos elegidos -->
+              <div v-if="form.recursosSeleccionados.length">
+                <table class="table table-sm table-bordered">
+                  <thead class="table-light">
+                    <tr>
+                      <th style="width:75%">Recurso</th>
+                      <th class="text-center" style="width:25%">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="rec in form.recursosSeleccionados" :key="rec.c_recurso">
+                      <td>{{ rec.l_recurso }}</td>
+                      <td class="text-center">
+                        <button v-if="!q_edit" type="button" class="btn btn-sm btn-danger" @click="quitarRecurso(rec)">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                        <button v-else type="button" class="btn btn-sm btn-danger" disabled>
+                          <i class="fas fa-trash" ></i>
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div v-if="!q_edit" class="text-end">
+                <button class="btn btn-primary">Guardar actividad</button>
+              </div>
+            </form>
+          </div>
         </div>
-      </div>
-    </div>
-
-    <!-- Popup de entrada de datos -->
-    <div v-if="showInputPopup" class="popup-overlay">
-      <div class="popup-box">
-        <input type="text" v-model="nuevoItem" placeholder="Nuevo elemento" class="form-control mb-2">
-        <button class="btn btn-sm btn-success me-2" @click="agregarItem">Agregar</button>
-        <button class="btn btn-sm btn-secondary" @click="showInputPopup = false">Cancelar</button>
       </div>
     </div>
   </div>
 </template>
 
-
 <script>
-import { mapGetters } from 'vuex';
-
+import axios from 'axios'
+import { mapGetters } from 'vuex'
+import Swal from 'sweetalert2'
 
 export default {
   name: 'ModalAgendar',
   data() {
     return {
       isModalOpen: false,
-      invitaciones: ['FA', 'OM', 'RL'],
-      recursos: ['Impresora 3D', 'Camara'],
-      etiquetas: ['Captación', 'Importante'],
-      nuevoItem: '',
-      tipoActual: '',
-      showInputPopup: false,
-      popupVisible: false,
+      recursosDisponibles: [],
+      recursoSeleccionado: null,
+      form: {
+        l_actividad: '',
+        l_descripcion: '',
+        l_diaActividad: '',
+        l_horaActividad: '',
+        recursosSeleccionados: []
+      },
+      q_edit:false
     }
   },
-  computed:{
-    ...mapGetters(['usuario'])
+  props: {
+    accionActividadProp: String,
+    actividadProp: Object
+  },
+  computed: { ...mapGetters(['usuario']) },
+  mounted() {
+    //this.cargarRecursos()
+
+    if (this.accionActividadProp === 'editarActividad' && this.actividadProp) {
+      axios.get('/listRecursos')
+        .then(res => {
+          this.q_edit = true
+          this.recursosDisponibles = res.data.recursos
+
+
+          if (this.accionActividadProp === 'editarActividad' && this.actividadProp) {
+            this.form.l_actividad = this.actividadProp.l_actividad
+            this.form.l_descripcion = this.actividadProp.l_descripcion
+            this.form.l_diaActividad = this.actividadProp.l_diaActividad
+            this.form.l_horaActividad = this.actividadProp.l_horaActividad.substring(0, 5)
+
+            const idsSeleccionados = this.actividadProp.c_recursos
+              ? this.actividadProp.c_recursos.split(',').map(id => id.trim())
+              : []
+
+            this.form.recursosSeleccionados = this.recursosDisponibles.filter(r =>
+              idsSeleccionados.includes(String(r.c_recurso))
+            )
+
+            this.recursosDisponibles = this.recursosDisponibles.filter(
+              r => !idsSeleccionados.includes(String(r.c_recurso))
+            )
+
+            this.form.c_actividad = this.actividadProp.c_actividad
+          }
+        })
+    } else {
+      this.cargarRecursos()
+    }
+
+
   },
   methods: {
-    mostrarPopup() {
-      this.popupVisible = true;
-    },
     openModal() {
-      this.isModalOpen = true;
-      document.body.classList.add('modal-open');
+      this.isModalOpen = true
+      document.body.classList.add('modal-open')
     },
     closeModal() {
       this.$emit('cerrar-ModalAgendar')
+      this.isModalOpen = false
+      document.body.classList.remove('modal-open')
+    },
 
-      this.isModalOpen = false;
-      document.body.classList.remove('modal-open');
+    cargarRecursos() {
+      axios.get('/listRecursos')
+        .then(res => { this.recursosDisponibles = res.data.recursos })
+        .catch(console.error)
     },
-    mostrarPopup(tipo) {
-      this.tipoActual = tipo;
-      this.nuevoItem = '';
-      this.showInputPopup = true;
+
+
+    agregarRecurso() {
+      if (!this.recursoSeleccionado) return
+
+      this.form.recursosSeleccionados.push(this.recursoSeleccionado)
+
+      this.recursosDisponibles = this.recursosDisponibles.filter(
+        r => r.c_recurso !== this.recursoSeleccionado.c_recurso
+      )
+
+      this.recursoSeleccionado = null
     },
-    agregarItem() {
-      const item = this.nuevoItem.trim();
-      if (item === '') return;
-      if (this.tipoActual === 'invitacion') {
-        this.invitaciones.push(item);
-      } else if (this.tipoActual === 'recurso') {
-        this.recursos.push(item);
-      } else if (this.tipoActual === 'etiqueta') {
-        this.etiquetas.push(item);
+
+    quitarRecurso(rec) {
+      this.recursosDisponibles.push(rec)
+
+      this.form.recursosSeleccionados = this.form.recursosSeleccionados.filter(
+        r => r.c_recurso !== rec.c_recurso
+      )
+    },
+
+    guardarActividad() {
+      const payload = {
+        c_usuario: this.usuario.c_usuario,
+        l_actividad: this.form.l_actividad,
+        l_descripcion: this.form.l_descripcion,
+        l_diaActividad: this.form.l_diaActividad,
+        l_horaActividad: this.form.l_horaActividad,
+        recursos: this.form.recursosSeleccionados.map(r => r.c_recurso).join(',')
       }
-      this.nuevoItem = '';
-      this.showInputPopup = false;
+
+      Swal.fire({
+        title: '¿Crear actividad?',
+        text: '¿Estás seguro de guardar esta actividad?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, crear',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33'
+      }).then(result => {
+        if (result.isConfirmed) {
+          axios.post('/grabActividad', payload)
+            .then(() => {
+              Swal.fire({
+                title: '¡Éxito!',
+                text: 'Actividad creada correctamente.',
+                icon: 'success',
+                confirmButtonColor: '#12BACA'
+              })
+              this.closeModal()
+            })
+        }
+      })
     }
+
   }
 }
 </script>
-
-<style scoped>
-.modal {
-  transition: opacity 0.15s linear;
-}
-
-.modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1040;
-}
-
-.modal-open {
-  overflow: hidden;
-}
-
-.titulo-agend-actividad {
-  background-color: #12BACA;
-}
-
-.titulo-agend-actividad .btn-close {
-  filter: invert(1) brightness(2);
-}
-
-/* Scroll horizontal sin mostrar barra */
-.scroll-hidden {
-  overflow-x: auto;
-  white-space: nowrap;
-  padding-bottom: 5px;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.scroll-hidden::-webkit-scrollbar {
-  display: none;
-}
-
-/* Popup personalizado */
-.popup-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 1100;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.popup-box {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  width: 300px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-}
-</style>

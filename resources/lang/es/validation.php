@@ -16,5 +16,9 @@ return [
         'descripcionRecurso' => 'Descripción de recurso',
         'nombre' => 'Nombre',
         'apellido' => 'Apellido',
+        'l_actividad' => 'Nombre de la actividad',
+        'l_descripcion' => 'Descripcion de la actividad',
+        'l_diaActividad' => 'Día de la actividad',
+        'l_horaActividad' => 'Hora de la actividad'
     ],
 ];
