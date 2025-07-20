@@ -5,7 +5,7 @@
             :style="{ display: isModalOpen ? 'block' : 'none' }" aria-modal="true" role="dialog">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content shadow-lg">
-                    <div v-if="tipo === 'crearContra' " class="modal-header titulo-crear-contra">
+                    <div v-if="tipo === 'crearContra'" class="modal-header titulo-crear-contra">
                         <h5 class="modal-title text-white">Crear contraseña</h5>
                         <button type="button" class="btn-close" @click="closeModal"></button>
                     </div>
@@ -64,7 +64,11 @@
 
                     <div class="modal-footer">
                         <button class="btn btn-danger" @click="closeModal">Cerrar</button>
-                        <button class="btn btn-success" @click="grabarContrasena">Guardar contraseña</button>
+                        <!-- v-if="tipo === 'crearContra' " -->
+                        <button v-if="tipo === 'crearContra'" class="btn btn-success" @click="grabarContrasena">Guardar
+                            contraseña</button>
+                        <button v-else class="btn btn-success" @click="modContrasena">Cambiar contraseña</button>
+
                     </div>
                 </div>
             </div>
@@ -74,14 +78,19 @@
 
 <script>
 import Swal from 'sweetalert2';
+import { mapGetters } from 'vuex';
 
 export default {
     name: 'ModalCrearContrasena',
     props: {
         tipo: {
             type: String,
-            required: true, 
+            required: true,
             default: ''
+        },
+        usuarioProp: {
+            type: Object,
+            required: false
         }
     },
     data() {
@@ -93,12 +102,14 @@ export default {
             //Condicional
             mostrarContrasena: false,
             mostrarContrasenaRepetir: false
-
         };
     },
-    mounted(){
-        console.log("Eso se recibe: ", this.tipo)
-    },  
+    mounted() {
+
+    },
+    computed:{
+        ...mapGetters(['usuario'])
+    },
     methods: {
         openModal() {
             //Se resetea los campos
@@ -135,6 +146,55 @@ export default {
             this.$emit('enviar-contrasena', contrasenaDatos)
 
             this.closeModal();
+        },
+        modContrasena() {
+            if (this.contrasena === '' && this.repetirContrasena === '') {
+                this.closeModal();
+            } else {
+                if (this.contrasena !== this.repetirContrasena) {
+                    Swal.fire({
+                        title: "Error",
+                        text: "Las contraseñas no coinciden",
+                        icon: "error",
+                        confirmButtonColor: "#d33",
+                        confirmButtonText: "Cerrar",
+                    })
+                    return;
+                }
+
+                const contrasenaDatos = {
+                    c_usuario: this.usuario.c_usuario,
+                    contrasena: this.contrasena,
+                    repetirContrasena: this.repetirContrasena
+                }
+
+
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: '¿Deseas cambiar la contraseña del usuario?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Sí, cambiar contraseña',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        axios.post('/cambiarContra', contrasenaDatos)
+                            .then(response => {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: '¡Contraseña cambiada!',
+                                    text: 'La contraseña se actualizó correctamente.'
+                                }).then(() => {
+                                    this.closeModal()
+                                });
+                            })
+                    }
+                });
+            }
+
+
         },
         mostrarContra(tipo) {
             if (tipo === 1) {

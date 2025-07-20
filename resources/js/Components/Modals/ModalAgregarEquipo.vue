@@ -157,8 +157,6 @@ export default {
     }
   },
   mounted() {
-    console.log("Este prop se va pasar uu: ", this.equipoProp)
-    
     const esEdicion = this.tipoEquipoProp === 'editarEquipo'
 
     if (esEdicion) {

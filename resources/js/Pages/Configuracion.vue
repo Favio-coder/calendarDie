@@ -20,7 +20,10 @@
             </select>
           </div>
 
-          <button @click="abrirModalCrearCuenta" class="btn btn-primary mb-2">
+          <button v-if="!q_agregUsuario" @click="abrirModalCrearCuenta" class="btn btn-primary mb-2">
+            <i class="fa-solid fa-plus"></i> Agregar usuario
+          </button>
+          <button v-else class="btn btn-primary mb-2" disabled>
             <i class="fa-solid fa-plus"></i> Agregar usuario
           </button>
 
@@ -46,7 +49,11 @@
                   <td>{{ usuario.l_correoElectronico }}</td>
                   <td>{{ usuario.c_rol == 2 ? 'Mentor invitado' : 'Estudiante' }}</td>
                   <td>
-                    <button class="btn btn-sm btn-danger" @click="eliminarUsuario(usuario)">
+                    <!-- q_elimUsuario -->
+                    <button v-if="!q_elimUsuario" class="btn btn-sm btn-danger" @click="eliminarUsuario(usuario)">
+                      <i class="fa-solid fa-trash"></i>
+                    </button>
+                    <button v-else class="btn btn-sm btn-danger" disabled>
                       <i class="fa-solid fa-trash"></i>
                     </button>
                   </td>
@@ -60,10 +67,11 @@
 
         <!-- 🧩 Columna derecha: Acciones -->
         <div class="col-12 col-lg-6 d-flex flex-column gap-4">
-          <div class="action-box" @click="accion('permisos')">
+          <div class="action-box" @click="abrirModalPermisos()">
             🛡️
             <span>Permisos</span>
           </div>
+          <!-- </div q_asigUsuarioProg  -->
           <div class="action-box" @click="abrirModalAsignarPrograma()">
             🧩
             <span>Asignar programa</span>
@@ -76,15 +84,16 @@
             📊
             <span>Estadísticas</span>
           </div>
-          
+
         </div>
 
       </div>
     </div>
 
     <component :is="currentView" ref="modalRef" @close-modalCrearCuenta="cerrarModalCrearCuenta" v-bind="currentProps"
-      @close-modalEstadistica="cerrarModalEstadistica" @close-modalAsignProgram="cerrarModalAsignProgram" 
-      @cerrar-modalAdminProgram="cerrarModalCrearPrograma"/>
+      @close-modalEstadistica="cerrarModalEstadistica" @close-modalAsignProgram="cerrarModalAsignProgram"
+      @cerrar-modalAdminProgram="cerrarModalCrearPrograma" @cerrar-modalPermisos="cerrarModalPermisos"
+      @recargar-usuario="recargarUsuario" />
   </div>
 </template>
 
@@ -99,6 +108,7 @@ import ModalEstadistica from '../Components/Modals/ModalEstadistica.vue';
 import ModalAsignProgram from '../Components/Modals/ModalAsignProgram.vue';
 import ModalAdminProgramas from '../Components/Modals/ModalAdminProgramas.vue';
 import Swal from 'sweetalert2';
+import ModalPermiso from '../Components/Modals/ModalPermiso.vue';
 
 export default {
   components: {
@@ -107,7 +117,8 @@ export default {
     ModalCrearCuentaConf,
     ModalEstadistica,
     ModalAsignProgram,
-    ModalAdminProgramas
+    ModalAdminProgramas,
+    ModalPermiso
   },
   data() {
     return {
@@ -117,7 +128,14 @@ export default {
       usuariosUnicos: [],
       filtroNombre: '',
       filtroRol: '',
-      defaultFoto: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'
+      defaultFoto: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
+      q_agregUsuario: false,
+      q_elimUsuario: false,
+      q_asigUsuarioProg: false,
+      q_agregNuevoProg: false,
+      q_editarUsuari: false,
+      q_visualizarEst: false,
+      q_editPermiso: false
     };
   },
   computed: {
@@ -131,25 +149,93 @@ export default {
     }
   },
   mounted() {
-    axios.post('/listUsuarios', this.usuario).then(response => {
-      this.usuarios = response.data.usuarios;
-      const usuarios = response.data.usuarios;
+    const specs = [
+      { key: 'q_editPermiso', modulo: 'configuracion', tipo: 'asignar', desc: 'No asignar y eliminar permisos a usuarios' },
+      { key: 'q_elimUsuario', modulo: 'configuracion', tipo: 'eliminar', desc: 'No eliminar usuarios' },
+      { key: 'q_agregUsuario', modulo: 'configuracion', tipo: 'agregar', desc: 'No agregar usuarios' },
+      { key: 'q_asigUsuarioProg', modulo: 'configuracion', tipo: 'asignar', desc: 'No asignar usuarios a programas' },
+      { key: 'q_agregNuevoProg', modulo: 'configuracion', tipo: 'agregar', desc: 'No agregar nuevos programas' },
+      { key: 'q_editarUsuario', modulo: 'configuracion', tipo: 'editar', desc: 'No editar usuarios' },
+      { key: 'q_visualizarEst', modulo: 'configuracion', tipo: 'visualizar', desc: 'No visualizar estadísticas' },
+    ];
 
-      // Eliminar duplicados por c_usuario
-      const usuariosUnicos = usuarios.reduce((acc, usuario) => {
-        if (!acc.some(u => u.c_usuario === usuario.c_usuario)) {
-          acc.push(usuario);
-        }
-        return acc;
-      }, []);
+    Promise.all(specs.map(sp =>
+      axios.post('/devPermiso', {
+        c_usuario: this.usuario.c_usuario,
+        modulo: sp.modulo,
+        tipo: sp.tipo,
+        descripcion: sp.desc
+      }).then(r => ({ key: sp.key, valor: r.data.permiso }))
+    ))
+      .then(resultados => {
+        resultados.forEach(({ key, valor }) => { this[key] = valor; });
+      });
 
-      this.usuariosUnicos = usuariosUnicos
-    });
+    this.recargarUsuario()
+
+    // axios.post('/listUsuarios', this.usuario).then(response => {
+    //   this.usuarios = response.data.usuarios;
+    //   const usuarios = response.data.usuarios;
+
+    //   // Eliminar duplicados por c_usuario
+    //   const usuariosUnicos = usuarios.reduce((acc, usuario) => {
+    //     if (!acc.some(u => u.c_usuario === usuario.c_usuario)) {
+    //       acc.push(usuario);
+    //     }
+    //     return acc;
+    //   }, []);
+
+    //   this.usuariosUnicos = usuariosUnicos
+    // });
   },
   methods: {
+    recargarUsuario() {
+      axios.post('/listUsuarios', this.usuario).then(response => {
+        this.usuarios = response.data.usuarios;
+        const usuarios = response.data.usuarios;
+
+        // Eliminar duplicados por c_usuario
+        const usuariosUnicos = usuarios.reduce((acc, usuario) => {
+          if (!acc.some(u => u.c_usuario === usuario.c_usuario)) {
+            acc.push(usuario);
+          }
+          return acc;
+        }, []);
+
+        this.usuariosUnicos = usuariosUnicos
+      });
+    },
     abrirModalEditCuenta(_usuario) {
+      if (this.q_editarUsuari) {
+        Swal.fire({
+          title: 'Sin permisos',
+          text: '¡No puedes realizar esta acción!',
+          icon: 'warning',
+          confirmButtonText: 'Entendido'
+        });
+        return;
+      }
+
       this.currentView = ModalCrearCuentaConf;
       this.currentProps = { usuarioProp: _usuario };
+      nextTick(() => {
+        if (this.$refs.modalRef?.openModal) {
+          this.$refs.modalRef.openModal();
+        }
+      });
+    },
+    abrirModalPermisos() {
+      if (this.q_editPermiso) {
+        Swal.fire({
+          title: 'Sin permisos',
+          text: '¡No puedes realizar esta acción!',
+          icon: 'warning',
+          confirmButtonText: 'Entendido'
+        });
+        return;
+      }
+
+      this.currentView = ModalPermiso;
       nextTick(() => {
         if (this.$refs.modalRef?.openModal) {
           this.$refs.modalRef.openModal();
@@ -215,6 +301,16 @@ export default {
       })
     },
     abrirModalEstadistica() {
+      if (this.q_visualizarEst) {
+        Swal.fire({
+          title: 'Sin permisos',
+          text: '¡No puedes realizar esta acción!',
+          icon: 'warning',
+          confirmButtonText: 'Entendido'
+        });
+        return;
+      }
+
       this.currentView = ModalEstadistica;
       nextTick(() => {
         if (this.$refs.modalRef && this.$refs.modalRef.openModal) {
@@ -227,17 +323,34 @@ export default {
       this.currentView = null;
     },
     abrirModalAsignarPrograma() {
-      this.currentView = ModalAsignProgram
-      this.currentProps = {
-        usuarios: this.usuarios
+      if (this.q_asigUsuarioProg) {
+        Swal.fire({
+          title: 'Sin permisos',
+          text: '¡No puedes realizar esta acción!',
+          icon: 'warning',
+          confirmButtonText: 'Entendido'
+        });
+        return;
       }
+
+      this.currentView = ModalAsignProgram;
+      this.currentProps = { usuarios: this.usuarios };
+
       nextTick(() => {
-        if (this.$refs.modalRef && this.$refs.modalRef.openModal) {
-          this.$refs.modalRef.openModal();
-        }
+        this.$refs.modalRef?.openModal?.();
       });
     },
-    abrirModalCrearPrograma(){
+    abrirModalCrearPrograma() {
+      if (this.q_agregNuevoProg) {
+        Swal.fire({
+          title: 'Sin permisos',
+          text: '¡No puedes realizar esta acción!',
+          icon: 'warning',
+          confirmButtonText: 'Entendido'
+        });
+        return;
+      }
+
       this.currentView = ModalAdminProgramas
       nextTick(() => {
         if (this.$refs.modalRef && this.$refs.modalRef.openModal) {
@@ -245,13 +358,17 @@ export default {
         }
       });
     },
-    cerrarModalCrearPrograma(){
-      this.currentProps = null;
-      this.currentView = null;
+    cerrarModalCrearPrograma() {
+      this.currentProps = null
+      this.currentView = null
     },
     cerrarModalAsignProgram() {
-      this.currentProps = null;
-      this.currentView = null;
+      this.currentProps = null
+      this.currentView = null
+    },
+    cerrarModalPermisos() {
+      this.currentProps = null
+      this.currentView = null
     }
   }
 };

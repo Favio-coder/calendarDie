@@ -36,7 +36,8 @@
                 </div>
 
                 <div>
-                  <a v-if="sesionProp.l_linkGrabacion" :href="sesionProp.l_linkGrabacion" target="_blank" class="link-icon">
+                  <a v-if="sesionProp.l_linkGrabacion" :href="sesionProp.l_linkGrabacion" target="_blank"
+                    class="link-icon">
                     <i class="fa-solid fa-circle-play fa-lg text-success me-2"></i> Ver grabación
                   </a>
                   <span v-else class="text-muted">
@@ -48,12 +49,19 @@
               <!-- Recursos -->
               <div class="recursos">
                 <h6 class="fw-bold mb-2">📚 Recursos adjuntos</h6>
-                <ul v-if="sesionProp.recursosSesion && sesionProp.recursosSesion.length">
-                  <li v-for="(recurso, idx) in sesionProp.recursosSesion" :key="idx">
-                    <i class="fa-solid fa-paperclip me-2 text-dark"></i>
-                    <a :href="recurso.url" target="_blank">{{ recurso.nombre }}</a>
+                <ul v-if="sesionProp.recursosSesion && sesionProp.recursosSesion.length" class="list-group">
+                  <li v-for="(recurso, idx) in sesionProp.recursosSesion" :key="idx"
+                    class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                      <i class="fa-solid fa-paperclip me-2 text-dark"></i>
+                      {{ recurso.nombre }}
+                    </div>
+                    <a :href="recurso.url" download class="btn btn-outline-primary btn-sm">
+                      <i class="fa-solid fa-download me-1"></i> Descargar
+                    </a>
                   </li>
                 </ul>
+
                 <p v-else class="text-muted">Aún no se han adjuntado recursos.</p>
               </div>
             </div>
@@ -145,4 +153,14 @@ export default {
     font-size: 0.95rem;
   }
 }
+
+.list-group-item {
+  border: none;
+  border-bottom: 1px solid #eee;
+}
+
+.list-group-item:last-child {
+  border-bottom: none;
+}
+
 </style>

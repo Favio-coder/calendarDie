@@ -155,7 +155,7 @@ class SesionController extends Controller
                 'l_fotoSesion' => $rutaImagen
             ]);
 
-            // Insertar recursos (si existen)
+            // Insertar recursos 
             if ($request->hasFile('recursosArchivos')) {
                 foreach ($request->file('recursosArchivos') as $archivo) {
                     $nombreOriginal = $archivo->getClientOriginalName();

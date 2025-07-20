@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Exception;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Hash;
 
 class ConfiguracionController extends Controller
 {
@@ -83,7 +84,7 @@ class ConfiguracionController extends Controller
                     INNER JOIN Estudiante AS est ON equid.c_estudiante = est.c_estudiante
                     INNER JOIN Usuario AS u ON est.c_usuario = u.c_usuario
                     LEFT JOIN Matricula AS mat ON mat.c_estudiante = est.c_estudiante
-                        AND mat.c_equipo = equid.c_equipo  -- ⬅️ Coincidencia exacta de equipo
+                        AND mat.c_equipo = equid.c_equipo  
                     LEFT JOIN Programa AS pro ON pro.c_programa = mat.c_programa
                     WHERE mat.c_programa IS NOT NULL;
                 '
@@ -98,24 +99,6 @@ class ConfiguracionController extends Controller
             return response()->json([
                 'error' => true,
                 'mensaje' => 'Error al obtener la lista de estudiantes y mentores',
-                'detalle' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    function programaAsignado()
-    {
-        try {
-
-
-            return response()->json([
-                'estadisticas' => 'est',
-                'mensaje' => 'Equipo registrado correctamente.'
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => true,
-                'mensaje' => 'Error al obtener programa asignado',
                 'detalle' => $e->getMessage()
             ], 500);
         }
@@ -218,9 +201,20 @@ class ConfiguracionController extends Controller
 
 
         $validator = Validator::make($request->all(), [
-            'c_matricula' => 'required',
             'tipo' => 'required|string|in:profesor,estudiante',
         ]);
+
+        $validator->sometimes('c_matricula', 'required', function ($input) {
+            return $input->tipo === 'estudiante';
+        });
+
+        $validator->sometimes('c_programaDet', 'required', function ($input) {
+            return $input->tipo === 'profesor';
+        });
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
 
         if ($validator->fails()) {
             return response()->json([
@@ -234,6 +228,13 @@ class ConfiguracionController extends Controller
         try {
             // Validaciones por tipo
             if ($tipo === 'profesor') {
+                $programaDetId = (int) $request->c_programaDet;
+                //dd($matriculaId);
+                db::delete('
+                        delete from ProgramaDet where c_programaDet=:c_programaDet
+                    ', [
+                    'c_programaDet' => $programaDetId
+                ]);
             } elseif ($tipo === 'estudiante') {
                 $matriculaId = (int) $request->c_matricula;
                 //dd($matriculaId);
@@ -288,6 +289,79 @@ class ConfiguracionController extends Controller
             return response()->json([
                 'success' => false,
                 'mensaje' => 'Error durante la eliminación',
+                'detalle' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    function listMentoresOficiales()
+    {
+        try {
+            $mentoresOficiales = DB::select('select 
+                        u.c_usuario,
+                        u.l_nombre,
+                        u.l_apellido
+                    from Usuario as u
+                    inner join MentorOficial as mo
+                    on mo.c_usuario = u.c_usuario');
+
+
+            return response()->json([
+                'success' => true,
+                'mentoresOficiales' => $mentoresOficiales
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'mensaje' => 'Error durante la consulta',
+                'detalle' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function cambiarContra(Request $request)
+    {
+        try {
+            // Validación básica
+            $request->validate([
+                'c_usuario' => 'required',
+                'contrasena' => 'required|string',
+                'repetirContrasena' => 'required|string|same:contrasena'
+            ]);
+
+            // Buscar usuario
+            $cuentaEncontrada = DB::select('select * from usuario where c_usuario = :c_usuario', [
+                'c_usuario' => $request->c_usuario
+            ]);
+
+            if (count($cuentaEncontrada) === 0) {
+                return response()->json([
+                    'success' => false,
+                    'mensaje' => 'Usuario no encontrado'
+                ], 404);
+            }
+
+            // Hashear la contraseña
+            $hashedPassword = Hash::make($request->contrasena);
+
+            // Actualizar contraseña 
+            DB::statement('
+                UPDATE usuario 
+                SET l_contrasena = :contrasena 
+                WHERE c_usuario = :c_usuario
+            ', [
+                    'contrasena' => $hashedPassword,
+                    'c_usuario' => $request->c_usuario
+                ]);
+
+            return response()->json([
+                'success' => true,
+                'mensaje' => 'Contraseña actualizada'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'mensaje' => 'Error al cambiar la contraseña',
                 'detalle' => $e->getMessage()
             ], 500);
         }

@@ -75,11 +75,11 @@ export default {
 
             axios.get('/listProgramas')
               .then(programasResponse => {
-                console.log("Estos son response: ", programasResponse)
+
                 const programas = programasResponse.data.programas || [];
-                console.log("Estos son programas: ", programas)
+
                 this.$store.dispatch('guardarProgramas', programasResponse.data.programas );
-                console.log("Store luego de guardar:", this.$store.state.programas)
+
 
                 Swal.fire({
                   title: "Login exitoso",

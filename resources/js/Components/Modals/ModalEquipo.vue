@@ -149,7 +149,7 @@ export default {
       });
     },
     editarEquipo(equipo){
-      console.log("Este equipo se va editar: ", equipo)
+
       this.currentView = ModalAgregarEquipo
       this.currentProps = {
         tipoEquipoProp: 'editarEquipo',

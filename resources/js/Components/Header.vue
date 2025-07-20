@@ -14,7 +14,7 @@
         <a v-if="!q_autorizacion" class="nav-link mx-4 custom-hover" href="/actividades">Actividades</a>
         <a class="nav-link mx-4 custom-hover" href="/programas">Programas</a>
         <a v-if="!q_autorizacion" class="nav-link mx-4 custom-hover" href="/recursos">Recursos</a>
-        <a class="nav-link mx-4 custom-hover" href="#">Concursos</a>
+        <!-- <a class="nav-link mx-4 custom-hover" href="#">Concursos</a> -->
         <a v-if="!q_autorizacion" class="nav-link mx-4 custom-hover" href="/configuracion">Configuración</a>
       </div>
 
@@ -91,11 +91,11 @@ export default {
     ...mapGetters(['usuario']),
 
     fotoPerfilURL() {
-      // Si ya tiene foto, retornarla como URL completa, si no usar imagen por defecto
       return this.usuario.l_fotoPerfil
-        ? `http://localhost:8000/${this.usuario.l_fotoPerfil}`
+        ? `http://localhost:8000/${this.usuario.l_fotoPerfil}?t=${Date.now()}`
         : this.defaultImage;
     }
+
   },
   mounted() {
     if (this.usuario.c_rol !== '1') {

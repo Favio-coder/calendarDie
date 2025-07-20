@@ -286,7 +286,177 @@ class CuentaController extends Controller
         }
     }
 
-    function editarCuenta(Request $request) {
-        dd($request);
+    public function editarCuenta(Request $request)
+    {
+        //dd($request);
+        // Validar datos
+        $reglas = [
+            'c_usuario' => 'required|string',
+            'nombre' => [
+                'required',
+                'string',
+                'max:100',
+                'regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/u'
+            ],
+            'apellido' => [
+                'required',
+                'string',
+                'max:100',
+                'regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/u'
+            ],
+            'fechaNacimiento' => 'required|date',
+            'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:2048'
+        ];
+
+        if ($request->rol == 2) {
+            $reglas = array_merge($reglas, [
+                'descripcion' => 'required|string|max:255',
+                'linkedin' => 'nullable|string|max:100',
+            ]);
+        } elseif ($request->rol == 3) {
+            $reglas = array_merge($reglas, [
+                'codigoEstudiante' => 'required|string',
+                'carrera' => 'required|exists:Carrera,c_carrera',
+            ]);
+        }
+
+        $validator = Validator::make($request->all(), $reglas);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Procesar foto nueva si existe
+        $fotoRuta = null;
+        if ($request->hasFile('foto')) {
+            $foto = $request->file('foto');
+            $nombreFoto = uniqid() . '_' . $foto->getClientOriginalName();
+            $foto->move(public_path('fotos_usuarios'), $nombreFoto);
+            $fotoRuta = 'fotos_usuarios/' . $nombreFoto;
+        }
+
+        try {
+            // Ejecutar SP
+            $resultado = DB::select('EXEC proEditarCuenta 
+            :c_usuario,
+            :nombre,
+            :apellido,
+            :fechaNacimiento,
+            :codigoEstudiante,
+            :idCarrera,
+            :descripcionMentor,
+            :linkedin,
+            :fotoPerfil', [
+                'c_usuario' => $request->c_usuario,
+                'nombre' => $request->nombre,
+                'apellido' => $request->apellido,
+                'fechaNacimiento' => $request->fechaNacimiento,
+                'codigoEstudiante' => $request->codigoEstudiante ?? '',
+                'idCarrera' => $request->carrera ?? null,
+                'descripcionMentor' => $request->descripcion ?? '',
+                'linkedin' => $request->linkedin ?? '',
+                'fotoPerfil' => $fotoRuta ?? ''
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cuenta actualizada correctamente.',
+                'usuario' => $resultado[0],
+                'foto' => $fotoRuta ? asset("fotos_usuarios/{$fotoRuta}") : null
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ocurrió un error al editar la cuenta.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function editarCuentaOficial(Request $request)
+    {
+        //dd($request);
+        // Validar datos
+        $validator = Validator::make($request->all(), [
+            'c_usuario' => 'required|string',
+            'nombre' => [
+                'required',
+                'string',
+                'max:100',
+                'regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/u'
+            ],
+            'apellido' => [
+                'required',
+                'string',
+                'max:100',
+                'regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/u'
+            ],
+            'fechaNacimiento' => 'required|date',
+            'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:2048'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Procesar la foto si se carga una nueva
+        $fotoRuta = null;
+
+        // Si se envía una nueva foto
+        if ($request->hasFile('foto')) {
+            $foto = $request->file('foto');
+            $nombreFoto = uniqid() . '_' . $foto->getClientOriginalName();
+            $foto->move(public_path('fotos_usuarios'), $nombreFoto);
+            $fotoRuta = 'fotos_usuarios/' . $nombreFoto;
+        }
+        // Si no se envió una nueva foto pero se envió la existente
+        elseif ($request->has('fotoExistente')) {
+            $fotoRuta = $request->input('fotoExistente');
+        }
+
+
+
+        //dd($request);
+        try {
+            // Realizar la actualización
+            DB::statement("
+            UPDATE Usuario SET 
+                l_nombre = :nombre,
+                l_apellido = :apellido,
+                f_nacimiento = :fechaNacimiento,
+                l_fotoPerfil = :fotoPerfil
+            WHERE c_usuario = :c_usuario
+        ", [
+                'nombre' => $request->nombre,
+                'apellido' => $request->apellido,
+                'fechaNacimiento' => $request->fechaNacimiento,
+                'fotoPerfil' => $fotoRuta ?? '',
+                'c_usuario' => $request->c_usuario
+            ]);
+
+            $usuarioActualizado = (array) DB::table('Usuario')
+                ->where('c_usuario', $request->c_usuario)
+                ->first();
+
+            unset($usuarioActualizado['l_contrasena']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cuenta actualizada correctamente.',
+                'usuario' => $usuarioActualizado
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ocurrió un error al actualizar la cuenta.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

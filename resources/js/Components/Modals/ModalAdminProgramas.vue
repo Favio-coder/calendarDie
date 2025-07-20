@@ -33,20 +33,24 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr v-if="programas.length === 0">
-                                        <td colspan="4">No hay programas registrados.</td>
-                                    </tr>
-                                    <tr v-else @dblclick="editarPrograma(p)" v-for="(p, index) in programas"
-                                        :key="p.c_programa">
-                                        <td>{{ index + 1 }}</td>
-                                        <td>{{ p.l_programa }}</td>
-                                        <td>{{ p.l_descripcion }}</td>
-                                        <td>
-                                            <button @click="elimPrograma(p)" class="btn btn-danger btn-sm">
-                                                <i class="fa-solid fa-trash-can"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
+                                    <template v-if="programas.length === 0">
+                                        <tr>
+                                            <td colspan="4">No hay programas registrados.</td>
+                                        </tr>
+                                    </template>
+                                    <template v-else>
+                                        <tr v-for="(p, index) in programas" :key="p.c_programa"
+                                            @dblclick="editarPrograma(p)">
+                                            <td>{{ index + 1 }}</td>
+                                            <td>{{ p.l_programa }}</td>
+                                            <td>{{ p.l_descripcion }}</td>
+                                            <td>
+                                                <button @click="elimPrograma(p)" class="btn btn-danger btn-sm">
+                                                    <i class="fa-solid fa-trash-can"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </template>
                                 </tbody>
                             </table>
                         </div>
@@ -92,7 +96,7 @@ export default {
 
     },
     mounted() {
-        console.log("Estos programas se llama: ", this.programas)
+
     },
     methods: {
         cerrarModalAgregarPrograma() {
@@ -122,7 +126,6 @@ export default {
                 if (result.isConfirmed) {
                     axios.post('/elimPrograma', programa)
                         .then(response => {
-                            console.log(response)
                             this.$store.dispatch('eliminarPrograma', programa.c_programa)
 
                             Swal.fire({

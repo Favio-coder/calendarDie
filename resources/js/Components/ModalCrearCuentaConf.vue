@@ -6,7 +6,8 @@
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header titulo-agend-actividad">
-            <h5 class="modal-title text-white">Editar cuenta - {{ usuarioProp.l_nombre + ' ' + usuarioProp.l_apellido }}</h5>
+            <h5 class="modal-title text-white">Editar cuenta - {{ usuarioProp.l_nombre + ' ' + usuarioProp.l_apellido }}
+            </h5>
             <button type="button" class="btn-close" @click="closeModal"></button>
           </div>
 
@@ -83,6 +84,7 @@
                         </option>
                       </select>
                     </div>
+
                     <div v-else class="col-md-4 mb-3">
                       <label class="form-label">Carrera</label>
                       <select class="form-select" v-model.number="form.carrera">
@@ -97,7 +99,7 @@
                 </div>
 
                 <!-- Sección específica para Mentor invitado -->
-                <div v-if="usuarioProp.c_rol === '2' " class="mb-3">
+                <div v-if="usuarioProp.c_rol === '2'" class="mb-3">
                   <hr />
                   <div class="mb-3">
                     <label class="form-label">Descripción</label>
@@ -122,7 +124,7 @@
 
           <div class="modal-footer">
             <button class="btn btn-danger" @click="closeModal">Cerrar</button>
-            <button class="btn btn-crear-cuenta" @click="grabNuevaCuenta()">Editar cuenta</button>
+            <button class="btn btn-crear-cuenta" @click="editCuenta()">Editar cuenta</button>
           </div>
         </div>
       </div>
@@ -184,22 +186,22 @@ export default {
       return seleccionada ? seleccionada.carreras : []
     },
     fotoPerfilURL() {
-          return this.usuarioProp.l_fotoPerfil || this.defaultImage;
-        }
+      return this.usuarioProp.l_fotoPerfil || this.defaultImage;
+    }
   },
   mounted() {
-    console.log("Esto se hedera: ", this.usuarioProp)
     //Llenar el prop 
+    this.form.c_usuario = this.usuarioProp.c_usuario
     this.form.nombre = this.usuarioProp.l_nombre
     this.form.apellido = this.usuarioProp.l_apellido
     this.form.correo = this.usuarioProp.l_correoElectronico
     this.form.fechaNacimiento = this.usuarioProp.f_nacimiento
     this.form.rol = this.usuarioProp.c_rol
-    this.form.codigoEstudiante = this.usuarioProp.c_estudiante 
-    this.form.facultad = this.usuarioProp.codigo_facultad 
-    this.form.carrera = this.usuarioProp.c_carrera 
-    this.form.descripcion = this.usuarioProp.l_descripcion 
-    this.form.linkedin =  this.usuarioProp.l_linkedin 
+    this.form.codigoEstudiante = this.usuarioProp.c_estudiante
+    this.form.facultad = this.usuarioProp.c_facultad
+    this.form.carrera = this.usuarioProp.c_carrera
+    this.form.descripcion = this.usuarioProp.l_descripcion
+    this.form.linkedin = this.usuarioProp.l_linkedin
 
     axios.get('/obtenerCarreras').then(
       response => {
@@ -266,47 +268,69 @@ export default {
     handleFileUpload(event) {
       const file = event.target.files[0];
       if (file) {
+        this.form.foto = file
         const reader = new FileReader();
         reader.onload = e => this.preview = e.target.result;
         reader.readAsDataURL(file);
       }
     },
-    grabNuevaCuenta() {
+    editCuenta() {
       Swal.fire({
-        title: "Mensaje",
-        text: "Se creará una cuenta con estas credenciales, ¿estás seguro?",
+        title: "¿Guardar cambios?",
+        text: "Se actualizará la información de la cuenta. ¿Deseas continuar?",
         icon: "question",
         showCancelButton: true,
         confirmButtonColor: "#3085d6",
         cancelButtonColor: "#d33",
-        confirmButtonText: "Crear cuenta",
+        confirmButtonText: "Sí, guardar",
         cancelButtonText: "Cancelar"
-      }).then(response => {
-        if (response.isConfirmed) {
-          if (this.form.contrasena === '') {
-            Swal.fire({
-              title: "Mensaje",
-              text: "¡Upss!, debes crear una contraseña para esta cuenta",
-              icon: "error",
-              confirmButtonColor: "#3085d6",
-              confirmButtonText: "Crear contraseña",
-            }).then(() => {
-              this.abrirModalPassword()
-            });
-          } else {
-            this.form.creador = this.usuario.c_usuario;
+      }).then(result => {
+        if (result.isConfirmed) {
+          // Creamos FormData
+          const formData = new FormData();
+          formData.append('c_usuario', this.form.c_usuario);
+          formData.append('nombre', this.form.nombre);
+          formData.append('apellido', this.form.apellido);
+          formData.append('correo', this.form.correo);
+          formData.append('fechaNacimiento', this.form.fechaNacimiento);
+          formData.append('rol', this.form.rol);
+          formData.append('descripcion', this.form.descripcion || '');
+          formData.append('linkedin', this.form.linkedin || '');
+          formData.append('codigoEstudiante', this.form.codigoEstudiante || '');
+          formData.append('facultad', this.form.facultad || '');
+          formData.append('carrera', this.form.carrera || '');
+          // Agrega cualquier otro campo necesario...
 
-            axios.post('/registrarCuenta', this.form).then(response => {
+          // Asegúrate de que this.form.foto sea un archivo válido
+          if (this.form.foto instanceof File) {
+            formData.append('foto', this.form.foto);
+          }
+
+          axios.post('/editarCuenta', formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
+          })
+            .then(response => {
               Swal.fire({
-                title: "Mensaje",
-                text: "Cuenta creada",
+                title: "Éxito",
+                text: "Cuenta actualizada correctamente.",
                 icon: "success",
-                confirmButtonText: "Salir",
+                confirmButtonText: "Cerrar"
               }).then(() => {
+                this.$emit('recargar-usuario')
                 this.closeModal();
               });
+            })
+            .catch(error => {
+              console.error(error);
+              Swal.fire({
+                title: "Error",
+                text: error.response?.data?.message || 'Error al editar la cuenta.',
+                icon: "error",
+                confirmButtonText: "Cerrar"
+              });
             });
-          }
         }
       });
     },
@@ -314,7 +338,8 @@ export default {
     abrirModalPassword() {
       this.currentView = ModalCrearContrasena
       this.currentProps = {
-        tipo: 'crearContra'
+        tipo: 'editarContra',
+        usuarioProp: this.usuarioProp
       }
       nextTick(() => {
         if (this.$refs.modalRef && this.$refs.modalRef.openModal) {
@@ -324,7 +349,6 @@ export default {
     },
     recibirContrasena(datos) {
       this.form.contrasena = datos.contrasena
-      console.log("Recibido desde el hijo:", datos)
     }
   }
 }

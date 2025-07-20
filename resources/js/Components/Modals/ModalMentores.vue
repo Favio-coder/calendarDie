@@ -79,7 +79,7 @@ export default {
             document.body.classList.remove('modal-open');
         },
         cargarMentores() {
-            console.log("Cargar mentores")
+
             this.isLoading = true;
             axios.get('/listMentores')
                 .then(response => {
