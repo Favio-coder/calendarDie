@@ -171,7 +171,7 @@ export default {
         const estudiantes = res.data.estudiantes
         this.estudiantes = estudiantes       
 
-        if (!esEdicion) return
+        // if (!esEdicion) return
 
         const mapaCarreras = new Map()
         this.carreras = estudiantes.reduce((acc, est) => {
@@ -198,6 +198,8 @@ export default {
       })
       .catch(err => console.error('Error:', err))
       .finally(() => (this.isLoading = false))
+
+      console.log("Carreras: ", this.carreras)
   },
   methods: {
     cerrarModalEquipo() {

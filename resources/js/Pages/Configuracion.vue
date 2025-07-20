@@ -93,7 +93,7 @@
     <component :is="currentView" ref="modalRef" @close-modalCrearCuenta="cerrarModalCrearCuenta" v-bind="currentProps"
       @close-modalEstadistica="cerrarModalEstadistica" @close-modalAsignProgram="cerrarModalAsignProgram"
       @cerrar-modalAdminProgram="cerrarModalCrearPrograma" @cerrar-modalPermisos="cerrarModalPermisos"
-      @recargar-usuario="recargarUsuario" />
+      @recargar-usuario="recargarUsuario" @cargar-listaUsuarios="recargarUsuario"/>
   </div>
 </template>
 

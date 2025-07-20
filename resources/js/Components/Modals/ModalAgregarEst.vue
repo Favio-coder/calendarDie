@@ -15,7 +15,7 @@
                         <div class="row mb-3 align-items-end">
                             <!-- Facultad -->
                             <div class="col-md-6">
-                                <label class="form-label">Facultad:</label>
+                                <label class="form-label">Carrera:</label>
                                 <select class="form-select" v-model="carreraSeleccionada">
                                     <option disabled selected>Seleccionar facultad</option>
                                     <option v-for="carrera in carreras" :key="carrera.c_carrera"
@@ -136,7 +136,6 @@ export default {
         }
     },
     mounted() {
-        console.log("Se monta el componente nuevamente!!")
         this.estudiantes = this.estudiantesProp
         this.carreras = this.carrerasProp
 

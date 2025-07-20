@@ -58,7 +58,7 @@
 
                     <div class="modal-footer">
                         <button class="btn btn-danger" @click="closeModal">Cerrar</button>
-                        <button class="btn btn-crear-cuenta" @click="editarCuenta()">Crear cuenta</button>
+                        <button class="btn btn-crear-cuenta" @click="editarCuenta()">Editar cuenta</button>
                     </div>
                 </div>
             </div>
