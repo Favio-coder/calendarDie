@@ -178,9 +178,6 @@ export default {
         },
         // Logica para agregar estudiante en el equipo 
         agregarEstxEquipo(est) {
-            console.log(this.estudiantes)
-
-            console.log("Este estudiante se va agregar al equipo ", est)
             this.$emit('agregar-estudiante', est)
             this.estudiantes = this.estudiantes.filter(e => e.c_usuario !== est.c_usuario)
         },

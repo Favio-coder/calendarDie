@@ -284,7 +284,6 @@ export default {
               formData.append('foto', this.$refs.fotoPerfilInput.files[0]);
             }
 
-            console.log("Esto se va a enviar: ", formData)
             axios.post('/registrarCuenta', formData, {
               headers:{
                 'Content-Type': 'multipart/form-data'
@@ -317,7 +316,6 @@ export default {
     },
     recibirContrasena(datos) {
       this.form.contrasena = datos.contrasena
-      console.log("Recibido desde el hijo:", datos)
     }
   }
 }

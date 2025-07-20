@@ -67,9 +67,6 @@ export default {
     programaProp: Object
   },
   mounted() {
-    console.log("Programa heredarooosasaead: ", this.programaProp)
-
-
     if (this.accion === 'editarPrograma' && this.programaProp) {
       this.q_editar = true
       this.nuevoPrograma = {

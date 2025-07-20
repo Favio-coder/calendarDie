@@ -311,7 +311,7 @@ export default {
           this.inscritosLocales.forEach(u => u.q_enviado = true);
         });
     },
-    genPDF(usuario){
+    genPDF(usuario) {
       axios.post('/genPdfCompromiso', { usuario }, { responseType: 'blob' })
         .then(res => {
           const blob = new Blob([res.data], { type: 'application/pdf' });
@@ -328,9 +328,9 @@ export default {
           console.error('Error generando PDF:', err);
         });
     },
-    cerrarModalImpresion(){
-      this.currentProps=null
-      this.currentView=null
+    cerrarModalImpresion() {
+      this.currentProps = null
+      this.currentView = null
     },
     eliminarElemento(data) {
       Swal.fire({
@@ -345,6 +345,7 @@ export default {
         if (result.isConfirmed) {
           const dataEnviar = {
             c_matricula: data.c_matricula,
+            c_programaDet: data.c_programaDet,
             tipo: this.tipoMod
           };
 
@@ -356,7 +357,15 @@ export default {
               c_matricula: null
             };
 
-            this.inscritosLocales = this.inscritosLocales.filter(u => u.c_matricula !== data.c_matricula);
+            this.inscritosLocales = this.inscritosLocales.filter(u => {
+              if (this.tipoMod === 'estudiante') {
+                return u.c_matricula !== data.c_matricula;
+              } else {
+                return !(u.c_usuario === data.c_usuario && u.c_programa === data.c_programa);
+              }
+            });
+
+
             delete copia.l_programa;
             this.usuarios.push(copia);
 

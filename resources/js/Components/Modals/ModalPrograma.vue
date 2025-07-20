@@ -32,28 +32,29 @@
             <div class="scroll-contenedor" v-else>
               <div class="row">
                 <div v-if="sesiones.length != 0">
-                    <div @click="abrirModalSesion(item)" v-for="(item, idx) in sesiones" :key="item.c_sesion"
-                  class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
-                  <div class="position-relative card shadow border-0 h-100">
-                    <button v-if="usuario.c_rol === '1' || usuario.c_rol === '2'" @click.stop="eliminarSesion(item)"
-                      class="btn-close-sesion" title="Eliminar sesión">
-                      <i class="fa-solid fa-xmark small-icon"></i>
-                    </button>
-                    <img :src="item.l_fotoSesion || defaultImage" alt="Imagen de sesión" class="card-img-top img-fluid"
-                      style="max-height: 150px; object-fit: cover; background-color: #f8f9fa;" />
+                  <div @click="abrirModalSesion(item)" v-for="(item, idx) in sesiones" :key="item.c_sesion"
+                    class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
+                    <div class="position-relative card shadow border-0 h-100">
+                      <button v-if="usuario.c_rol === '1' || usuario.c_rol === '2'" @click.stop="eliminarSesion(item)"
+                        class="btn-close-sesion" title="Eliminar sesión">
+                        <i class="fa-solid fa-xmark small-icon"></i>
+                      </button>
+                      <img :src="item.l_fotoSesion || defaultImage" alt="Imagen de sesión"
+                        class="card-img-top img-fluid"
+                        style="max-height: 150px; object-fit: cover; background-color: #f8f9fa;" />
 
-                    <div class="card-body text-center">
-                      <h6 class="card-title text-dark mb-1">Sesión {{ idx + 1 }}</h6>
-                      <p class="mb-0 small text-muted">{{ item.l_sesion }}</p>
+                      <div class="card-body text-center">
+                        <h6 class="card-title text-dark mb-1">Sesión {{ idx + 1 }}</h6>
+                        <p class="mb-0 small text-muted">{{ item.l_sesion }}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
-                </div>
 
                 <div v-else class="text-center my-4">
-                    <p class="mt-2 mb-0">No hay sesiones existentes</p>
+                  <p class="mt-2 mb-0">No hay sesiones existentes</p>
                 </div>
-                
+
               </div>
             </div>
 
@@ -93,11 +94,12 @@ export default {
       isModalOpen: false,
       isLoading: false,
       sesiones: [],
-
       preview: null,
       defaultImage: 'https://www.shutterstock.com/image-vector/image-icon-trendy-flat-style-600nw-643080895.jpg',
       currentView: null,
-      currentProps: null
+      currentProps: null,
+      q_agregarElimSesion: false
+
     }
   },
   computed: {
@@ -105,6 +107,18 @@ export default {
   },
   mounted() {
     this.cargarSesiones();
+
+    axios.post('/devPermiso', {
+      c_usuario: this.usuario.c_usuario,
+      modulo: 'programas',
+      tipo: 'agregar',
+      descripcion: 'No agregar y eliminar ninguna sesión'
+    }).then(
+      r => {
+        this.q_agregarElimSesion = r.data.permiso
+      }
+    )
+
   },
   methods: {
     cargarSesiones() {
@@ -130,6 +144,16 @@ export default {
       document.body.classList.remove('modal-open');
     },
     abrirModalCrearSesion() {
+      if (this.q_agregarElimSesion) {
+        Swal.fire({
+          title: 'Sin permisos',
+          text: '¡No puedes realizar esta acción!',
+          icon: 'warning',
+          confirmButtonText: 'Entendido'
+        });
+        return;
+      }
+
       this.currentView = ModalAgregarSesion;
       this.currentProps = {
         codPrograma: this.programaProp.c_programa
@@ -141,6 +165,16 @@ export default {
       });
     },
     eliminarSesion(data) {
+      if (this.q_agregarElimSesion) {
+        Swal.fire({
+          title: 'Sin permisos',
+          text: '¡No puedes realizar esta acción!',
+          icon: 'warning',
+          confirmButtonText: 'Entendido'
+        });
+        return;
+      }
+
       const c_sesion = parseInt(data.c_sesion);
       const c_programa = parseInt(data.c_programa);
 
@@ -249,6 +283,7 @@ export default {
   from {
     transform: translateY(0);
   }
+
   to {
     transform: translateY(-10px);
   }

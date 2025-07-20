@@ -27,7 +27,8 @@
       </div>
       <div v-else>
         <div class="text-center py-5 header-alerta text-white">
-          <h2 class="display-5 fw-bold mb-1">No fuiste asignado a ningún programa ☹️</h2>
+          <h2 v-if="usuario.c_rol === '1' " class="display-5 fw-bold mb-1">No tienes permiso para ver ningún programa☹️</h2>
+          <h2 v-else  class="display-5 fw-bold mb-1">No fuiste asignado a ningún programa ☹️</h2>
           <p class="lead mb-0">Comunicate con el administrador</p>
         </div>
       </div>
@@ -65,7 +66,7 @@ export default {
     if (this.usuario.c_rol !== '1') {
       axios.post('/listPermisos', this.usuario).then(response => {
         this.permisosEst = response.data.permisos;
-        console.log('Permisos del usuario:', this.permisosEst);
+
 
         axios.get('/listProgramas').then(response => {
           const todosLosProgramas = response.data.programas;
@@ -80,16 +81,30 @@ export default {
           });
 
           this.programas = programasPermitidos;
-          console.log('Programas filtrados:', this.programas);
+
         });
 
       });
     } else {
       // Administrador: ve todos los programas
-      axios.get('/listProgramas').then(response => {
-        this.programas = response.data.programas;
-        console.log('Programas del admin:', this.programas);
-      });
+      axios.post('/devPermiso', {
+        c_usuario: this.usuario.c_usuario,
+        modulo: 'programas',
+        tipo: 'visualizar',
+        descripcion: 'No visualizar ningún programa'
+      }).then(
+        r => {
+          if (!r.data.permiso) {
+            //Si tiene permiso solo podra ver los programar
+            axios.get('/listProgramas').then(response => {
+              this.programas = response.data.programas;
+            })
+          }
+        }
+      )
+
+
+
     }
 
   },
@@ -109,7 +124,7 @@ export default {
       return icons[index % icons.length]
     },
     abrirModalPrograma(programa) {
-      console.log("Este es el programa: ", programa)
+
       this.currentView = ModalPrograma
       this.currentProps = {
         programaProp: programa

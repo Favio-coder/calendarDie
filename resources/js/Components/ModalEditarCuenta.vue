@@ -58,7 +58,7 @@
 
                     <div class="modal-footer">
                         <button class="btn btn-danger" @click="closeModal">Cerrar</button>
-                        <button class="btn btn-crear-cuenta" @click="grabNuevaCuenta()">Crear cuenta</button>
+                        <button class="btn btn-crear-cuenta" @click="editarCuenta()">Crear cuenta</button>
                     </div>
                 </div>
             </div>
@@ -91,18 +91,13 @@ export default {
                 apellido: '',
                 correo: '',
                 fechaNacimiento: '',
-                rol: '',
-                codigoEstudiante: '',
-                facultad: '',
-                carrera: '',
-                descripcion: '',
-                linkedin: '',
                 contrasena: ''
             },
             preview: null,
             defaultImage: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
             currentView: null,
-            currentProps: null
+            currentProps: null,
+            q_enviarFoto: false
         }
     },
     computed: {
@@ -116,14 +111,13 @@ export default {
         fotoPerfilURL() {
             // Si ya tiene foto, retornarla como URL completa, si no usar imagen por defecto
             return this.usuario.l_fotoPerfil
-            ? `http://localhost:8000/${this.usuario.l_fotoPerfil}`
-            : this.defaultImage;
+                ? `http://localhost:8000/${this.usuario.l_fotoPerfil}`
+                : this.defaultImage;
         }
 
 
     },
     mounted() {
-        console.log("Foto de perfil: ", this.usuario.l_fotoPerfil)
 
     },
     methods: {
@@ -133,11 +127,13 @@ export default {
         },
         openModal() {
             this.form = {
+                c_usuario: this.usuario.c_usuario,
                 nombre: this.usuario.l_nombre,
                 apellido: this.usuario.l_apellido,
                 correo: this.usuario.l_correoElectronico,
                 fechaNacimiento: this.usuario.f_nacimiento,
                 rol: this.usuario.c_rol,
+                foto: this.usuario.l_fotoPerfil || ''
                 // codigoEstudiante: '',
                 // facultad: '',
                 // carrera: '',
@@ -156,22 +152,66 @@ export default {
         handleFileUpload(event) {
             const file = event.target.files[0];
             if (file) {
+                this.q_enviarFoto = true
+                this.form.foto = file
                 const reader = new FileReader();
                 reader.onload = e => this.preview = e.target.result;
                 reader.readAsDataURL(file);
             }
         },
-        grabNuevaCuenta() {
+        editarCuenta() {
             Swal.fire({
                 title: "Mensaje",
-                text: "Se creara una cuenta con estas credenciales, ¿estas seguro?",
+                text: "Se actualizará la cuenta con estos datos. ¿Estás seguro?",
                 icon: "question",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                confirmButtonText: "Crear cuenta",
+                confirmButtonText: "Sí, actualizar",
                 cancelButtonText: "Cancelar"
-            })
+            }).then(result => {
+                if (result.isConfirmed) {
+                    const formData = new FormData();
+
+                    // Agrega los campos al FormData
+                    formData.append("c_usuario", this.form.c_usuario);
+                    formData.append("nombre", this.form.nombre);
+                    formData.append("apellido", this.form.apellido);
+                    formData.append("correo", this.form.correo);
+                    formData.append("fechaNacimiento", this.form.fechaNacimiento);
+
+                    // Verificar si es una nueva foto (File) o mantener la existente
+                    // Solo enviar la foto si realmente se cambió
+                    if (this.q_enviarFoto && this.form.foto instanceof File) {
+                        formData.append("foto", this.form.foto);
+                    } else {
+                        // Enviar la ruta actual de la foto para conservarla
+                        formData.append("fotoExistente", this.usuario.l_fotoPerfil);
+                    }
+
+                    axios.post("/editarCuentaOficial", formData, {
+                        headers: {
+                            "Content-Type": "multipart/form-data"
+                        }
+                    }).then(res => {
+                        this.$store.dispatch('guardarUsuario', res.data.usuario);
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Cuenta actualizada',
+                            text: "La información se actualizó correctamente.",
+                            confirmButtonText: 'Cerrar',
+                        });
+                    }).catch(error => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Ocurrió un error al actualizar la cuenta.',
+                            confirmButtonText: 'Cerrar'
+                        });
+                        console.error(error);
+                    });
+                }
+            });
         },
         abrirModalPassword() {
             this.currentView = ModalCrearContrasena
@@ -186,7 +226,6 @@ export default {
         },
         recibirContrasena(datos) {
             this.form.contrasena = datos.contrasena
-            console.log("Recibido desde el hijo:", datos)
         }
 
     }

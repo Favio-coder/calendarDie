@@ -15,7 +15,7 @@ use App\Http\Controllers\ActividadController;
 
 // Vistas renderizadas en VUE
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
+    return Inertia::render('Acceso', [
         'appName' => config('app.name'),
     ]);
 });
@@ -71,12 +71,14 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Rutas para consumir con get y post 
-
     // Acceso
     Route::post('/logout', [CuentaController::class, 'logout']);
     Route::post('/registrarCuenta', [CuentaController::class, 'registrarCuenta']);
     Route::post('/editarCuenta', [CuentaController::class, 'editarCuenta']);
+    Route::post('/cambiarContra', [ConfiguracionController::class, 'cambiarContra']);
     Route::post('/elimCuenta', [CuentaController::class, 'eliminarCuenta']);
+    Route::post('/editarCuentaOficial', [CuentaController::class, 'editarCuentaOficial']);
+
 
     //Obtener carreras
     Route::get('/obtenerCarreras', [CuentaController::class, 'devCarreraFacu']);
@@ -123,6 +125,9 @@ Route::middleware(['auth'])->group(function () {
 
     //Modulo de permisos 
     Route::post('/listPermisos', [PermisoController::class, 'listPermisos']);
+    Route::post('/devPermiso', [PermisoController::class, 'devPermiso']);
+    Route::get('/listMentoresOficiales', [ConfiguracionController::class, 'listMentoresOficiales']);
+    Route::post('/grabPermisos', [PermisoController::class, 'grabPermisos']);
 
     //Impresión 
     Route::post('/genPdfEquipo', [ImpresionController::class, 'genPdfEquipo']);

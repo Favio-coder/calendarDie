@@ -69,6 +69,7 @@ import ModalAgendar from '../Components/ModalAgendar.vue'
 import { nextTick } from 'vue'
 import axios from 'axios'
 import Swal from 'sweetalert2';
+import { mapGetters } from 'vuex';
 
 //Librerias
 import { Calendar } from '@fullcalendar/core'
@@ -95,10 +96,14 @@ export default {
       diaSeleccionadoText: null,
       newEventTitle: '',
       currentProps: null,
-      currentView: null
+      currentView: null,
+      q_agreAct: false,
+      q_elimAct: false
     }
   },
   computed: {
+    ...mapGetters(['usuario']),
+
     eventsFordiaSeleccionado() {
       if (!this.diaSeleccionado) return []
       this.diaSeleccionadoText = this.convertirFecha(this.diaSeleccionado)
@@ -108,6 +113,22 @@ export default {
   mounted() {
     this.listEventos()
 
+     const specs = [
+      { key: 'q_agreAct', modulo: 'actividades', tipo: 'agregar', desc: 'No agregar ninguna actividad' },
+      { key: 'q_elimAct', modulo: 'actividades', tipo: 'eliminar', desc: 'No eliminar ninguna actividad' },
+    ];
+
+    Promise.all(specs.map(sp =>
+      axios.post('/devPermiso', {
+        c_usuario: this.usuario.c_usuario,
+        modulo: sp.modulo,
+        tipo: sp.tipo,
+        descripcion: sp.desc
+      }).then(r => ({ key: sp.key, valor: r.data.permiso }))
+    ))
+      .then(resultados => {
+        resultados.forEach(({ key, valor }) => { this[key] = valor; });
+      });
 
     this.calendar = new Calendar(this.$refs.calendar, {
       plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],
@@ -154,6 +175,16 @@ export default {
       this.handleDoubleClick(clickInfo.event.id)
     },
     agregarEvento() {
+      if (this.q_agreAct) {
+        Swal.fire({
+          title: 'Sin permisos',
+          text: '¡No puedes realizar esta acción!',
+          icon: 'warning',
+          confirmButtonText: 'Entendido'
+        });
+        return;
+      }
+
       this.currentView = ModalAgendar
       nextTick(() => {
         if (this.$refs.modalRef && this.$refs.modalRef.openModal) {
@@ -180,8 +211,16 @@ export default {
       })
     },
     removeEvent(evento) {
-      // evento puede ser el objeto evento completo o solo el ID;
-      // ajustamos según tu llamada actual:
+      if (this.q_elimAct) {
+        Swal.fire({
+          title: 'Sin permisos',
+          text: '¡No puedes realizar esta acción!',
+          icon: 'warning',
+          confirmButtonText: 'Entendido'
+        });
+        return;
+      }
+
       const eventId = typeof evento === 'object' ? evento.id : evento
 
       Swal.fire({
