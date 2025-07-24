@@ -41,7 +41,8 @@
                   <tr v-if="recursosFiltrados.length === 0">
                     <td colspan="4">No hay recursos registrados.</td>
                   </tr>
-                  <tr @dblclick="abrirModalEditar(recurso)" v-for="(recurso, index) in recursosFiltrados" :key="recurso.c_recurso">
+                  <tr @dblclick="abrirModalEditar(recurso)" v-for="(recurso, index) in recursosFiltrados"
+                    :key="recurso.c_recurso">
                     <td>{{ index + 1 }}</td>
                     <td>{{ recurso.l_recurso }}</td>
                     <td>{{ recurso.l_descripcion }}</td>
@@ -57,17 +58,32 @@
           </div>
 
           <div class="modal-footer d-flex justify-content-between">
-            <button class="btn btn-danger" @click="closeModal">Cerrar</button>
-            <button class="btn btn-primary" @click="abrirModalAgregar">
-              <i class="fa-solid fa-plus me-1"></i> Agregar recurso
-            </button>
+            <!-- Botón Cerrar alineado a la izquierda -->
+            <div>
+              <button class="btn btn-danger" @click="closeModal">
+                Cerrar
+              </button>
+            </div>
+
+            <!-- Botones Imprimir y Agregar alineados a la derecha -->
+            <div class="d-flex gap-2">
+              <button class="btn btn-success" @click="imprimirPDF">
+                <i class="fa-solid fa-print me-1"></i> Imprimir PDF
+              </button>
+              <button class="btn btn-primary" @click="abrirModalAgregar">
+                <i class="fa-solid fa-plus me-1"></i> Agregar recurso
+              </button>
+            </div>
           </div>
+
+
         </div>
       </div>
     </div>
 
     <!-- Modal hijo -->
-    <component :is="currentView" v-bind="currentProps" ref="modalRef" @recurso-agregado="recursoAgregado" @cerrar-modalAgregarRecurso="cerrarModalAgregarRecurso" />
+    <component :is="currentView" v-bind="currentProps" ref="modalRef" @recurso-agregado="recursoAgregado"
+      @cerrar-modalAgregarRecurso="cerrarModalAgregarRecurso" />
   </div>
 </template>
 
@@ -76,10 +92,11 @@ import ModalAgregarRecurso from './ModalAgregarRecurso.vue';
 import { nextTick } from 'vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import ModalImpresion from '../layouts/ModalImpresion.vue';
 
 export default {
   name: 'ModalRecursos',
-  components: { ModalAgregarRecurso },
+  components: { ModalAgregarRecurso, ModalImpresion },
   data() {
     return {
       isModalOpen: false,
@@ -189,6 +206,23 @@ export default {
     },
     recursoAgregado() {
       this.cargarRecursos();
+    },
+    imprimirPDF(){
+      axios.post('/genPdfRecurso', this.recursos, { responseType: 'blob' })
+        .then(res => {
+          const blob = new Blob([res.data], { type: 'application/pdf' })
+          const url = URL.createObjectURL(blob);
+          this.currentView = ModalImpresion;
+          this.currentProps = { pdfBlobUrl: url };
+          this.$nextTick(() => {
+            if (this.$refs.modalRef && this.$refs.modalRef.openModal) {
+              this.$refs.modalRef.openModal();
+            }
+          });
+        })
+        .catch(err => {
+          console.error('Error generando PDF:', err)
+        })
     }
   }
 };
@@ -234,23 +268,28 @@ export default {
   gap: 10px;
   align-items: center;
 }
+
 .dot {
   width: 14px;
   height: 14px;
   border-radius: 50%;
   animation: bounce 0.6s infinite alternate;
 }
+
 .dot-blue {
   background-color: #12BACA;
 }
+
 .dot-yellow {
   background-color: #FFD700;
   animation-delay: 0.2s;
 }
+
 @keyframes bounce {
   from {
     transform: translateY(0);
   }
+
   to {
     transform: translateY(-10px);
   }

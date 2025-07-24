@@ -294,16 +294,18 @@ class ConfiguracionController extends Controller
         }
     }
 
-    function listMentoresOficiales()
+    function listMentoresOficiales(Request $request)
     {
         try {
             $mentoresOficiales = DB::select('select 
-                        u.c_usuario,
-                        u.l_nombre,
-                        u.l_apellido
-                    from Usuario as u
-                    inner join MentorOficial as mo
-                    on mo.c_usuario = u.c_usuario');
+                                                u.c_usuario,
+                                                u.l_nombre,
+                                                u.l_apellido
+                                            from Usuario AS u
+                                            inner join MentorOficial AS mo ON mo.c_usuario = u.c_usuario
+                                            where u.c_usuario <> :c_usuario', [
+                                                'c_usuario' => $request->c_usuario
+                                            ]);
 
 
             return response()->json([
@@ -350,9 +352,9 @@ class ConfiguracionController extends Controller
                 SET l_contrasena = :contrasena 
                 WHERE c_usuario = :c_usuario
             ', [
-                    'contrasena' => $hashedPassword,
-                    'c_usuario' => $request->c_usuario
-                ]);
+                'contrasena' => $hashedPassword,
+                'c_usuario' => $request->c_usuario
+            ]);
 
             return response()->json([
                 'success' => true,

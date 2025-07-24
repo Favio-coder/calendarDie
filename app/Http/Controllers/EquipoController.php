@@ -119,13 +119,16 @@ class EquipoController extends Controller
         }
     }
 
-    function editEquipo(Request $request){
+    function editEquipo(Request $request)
+    {
+        // dd($request)
+
         $validator = Validator::make($request->all(), [
             'c_equipo' => 'required|string',
             'nombreEquipo' => 'required|string',
             'descripcionEquipo' => 'required|string',
             'estudiantes' => 'required|string',
-            'estudiantesEliminar'=> 'required|string',
+            'estudiantesEliminar' => 'required|string',
             'logo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'logoActual' => 'nullable|string'
         ]);
@@ -167,7 +170,16 @@ class EquipoController extends Controller
             ], 422);
         }
 
-        $logoRuta = $request->input('logoActual'); 
+        // Asignar automáticamente q_lider = 0 a los que no lo tengan
+        $estudiantes = collect($estudiantes)->map(function ($e) {
+            $e['q_lider'] = isset($e['q_lider']) ? (int)$e['q_lider'] : 0;
+            return $e;
+        });
+
+        // Convertimos el array modificado a JSON
+        $jsonEstudiantes = $estudiantes->toJson();
+
+        $logoRuta = $request->input('logoActual');
 
         if ($request->hasFile('logo')) {
             $logoAnterior = $request->input('logoActual');
@@ -175,25 +187,23 @@ class EquipoController extends Controller
                 @unlink(public_path($logoAnterior));
             }
 
-            // 2) Guardar el nuevo logo
             $nuevoLogo   = $request->file('logo');
             $nombreLogo  = uniqid() . '_' . $nuevoLogo->getClientOriginalName();
             $nuevoLogo->move(public_path('logos_equipo'), $nombreLogo);
 
-            $logoRuta = 'logos_equipo/' . $nombreLogo; 
+            $logoRuta = 'logos_equipo/' . $nombreLogo;
         }
 
         try {
-            // Ejecutar el procedimiento almacenado
             DB::statement(
-            'EXEC proEditarEquipo ?, ?, ?, ?, ?, ?',
-            [
-                $request->input('c_equipo'),            
-                $request->input('nombreEquipo'),         
-                $request->input('descripcionEquipo'),    
-                $logoRuta ?? '',                        
-                $request->input('estudiantesEliminar'),  
-                $request->input('estudiantes')          
+                'EXEC proEditarEquipo ?, ?, ?, ?, ?, ?',
+                [
+                    $request->input('c_equipo'),
+                    $request->input('nombreEquipo'),
+                    $request->input('descripcionEquipo'),
+                    $logoRuta ?? '',
+                    $request->input('estudiantesEliminar'),
+                    $jsonEstudiantes
                 ]
             );
 
@@ -207,7 +217,8 @@ class EquipoController extends Controller
     }
 
 
-    function listEquipo(){
+    function listEquipo()
+    {
         try {
             $Equipo = db::select(' 
                 select * from Equipo
@@ -231,14 +242,15 @@ class EquipoController extends Controller
         }
     }
 
-    function elimEquipo(Request $request){
-        try{
+    function elimEquipo(Request $request)
+    {
+        try {
             DB::statement('EXEC proElimEquipo ?', [$request->c_equipo]);
             return response()->json([
                 'success' => true,
                 'message' => 'Equipo eliminado exitosamente'
             ]);
-        }catch(\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Ocurrió un error al eliminar el equipo',

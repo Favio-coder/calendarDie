@@ -61,6 +61,7 @@ import ModalPermisoUsua from './ModalPermisoUsua.vue';
 import { nextTick } from 'vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import { mapGetters } from 'vuex';
 
 export default {
   name: 'ModalPermiso',
@@ -76,7 +77,7 @@ export default {
     };
   },
   computed: {
-
+    ...mapGetters(['usuario'])
   },
   mounted() {
     this.cargarMentores();
@@ -121,7 +122,7 @@ export default {
     // },
     cargarMentores() {
       this.isLoading = true;
-      axios.get('/listMentoresOficiales')
+      axios.post('/listMentoresOficiales', this.usuario )
         .then(response => {
           this.mentoresOficiales = response.data.mentoresOficiales;
         })

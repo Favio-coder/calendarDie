@@ -8,7 +8,7 @@ CREATE  PROCEDURE proCrearActividad
     @l_descripcion    TEXT,
     @l_horaActividad  TIME,
     @l_diaActividad   DATE,
-    @jsonRecursos     NVARCHAR(MAX)   --  Ej: '["R001","R005","R007"]'
+    @jsonRecursos     NVARCHAR(MAX)   
 AS
 BEGIN
     SET NOCOUNT ON;

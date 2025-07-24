@@ -199,7 +199,7 @@ export default {
     imprimirEquipo(equipo) {
       axios.post('/genPdfEquipo', { equipo }, { responseType: 'blob' })
         .then(res => {
-          const blob = new Blob([res.data], { type: 'application/pdf' });
+          const blob = new Blob([res.data], { type: 'application/pdf' })
           const url = URL.createObjectURL(blob);
           this.currentView = ModalImpresion;
           this.currentProps = { pdfBlobUrl: url };
@@ -210,9 +210,8 @@ export default {
           });
         })
         .catch(err => {
-          console.error('Error generando PDF:', err);
-        });
-
+          console.error('Error generando PDF:', err)
+        })
     },
   }
 }
