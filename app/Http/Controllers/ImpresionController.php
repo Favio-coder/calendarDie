@@ -59,9 +59,9 @@ class ImpresionController extends Controller
 
     public function genPdfCompromiso(Request $request)
     {
-        $estudiante = $request->all(); 
+        $estudiante = $request->all();
         $estudiante = $estudiante['usuario'];
-        
+
         if (empty($estudiante['l_equipo']) || empty($estudiante['l_programa'])) {
             return response()->json([
                 'success' => false,
@@ -79,7 +79,7 @@ class ImpresionController extends Controller
             'equipo'      => $estudiante['l_equipo'],
             'programa'    => $estudiante['l_programa'],
             'fecha'       => $fecha,
-            'usuario'     => $estudiante 
+            'usuario'     => $estudiante
         ];
 
         $pdf = Pdf::loadView('pdf.compromiso-estudiante', $dataPdf);
@@ -87,5 +87,32 @@ class ImpresionController extends Controller
         return response($pdf->output(), 200)
             ->header('Content-Type',        'application/pdf')
             ->header('Content-Disposition', 'inline; filename="compromiso_equipo.pdf"');
+    }
+
+    public function genPdfRecurso(Request $request)
+    {
+        $recursos = $request->all(); // Recibe un array de recursos directamente
+
+        if (empty($recursos)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se proporcionaron recursos.'
+            ], 400);
+        }
+
+        setlocale(LC_TIME, 'es_ES.UTF-8');
+        Carbon::setLocale('es');
+        $fecha = ucfirst(Carbon::now()->translatedFormat('l j \d\e F \d\e\l Y'));
+
+        $dataPdf = [
+            'recursos' => $recursos,
+            'fecha' => $fecha,
+        ];
+
+        $pdf = Pdf::loadView('pdf.reporte-recursos', $dataPdf);
+
+        return response($pdf->output(), 200)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="reporte_recursos.pdf"');
     }
 }

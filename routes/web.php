@@ -126,10 +126,11 @@ Route::middleware(['auth'])->group(function () {
     //Modulo de permisos 
     Route::post('/listPermisos', [PermisoController::class, 'listPermisos']);
     Route::post('/devPermiso', [PermisoController::class, 'devPermiso']);
-    Route::get('/listMentoresOficiales', [ConfiguracionController::class, 'listMentoresOficiales']);
+    Route::post('/listMentoresOficiales', [ConfiguracionController::class, 'listMentoresOficiales']);
     Route::post('/grabPermisos', [PermisoController::class, 'grabPermisos']);
 
     //Impresión 
     Route::post('/genPdfEquipo', [ImpresionController::class, 'genPdfEquipo']);
     Route::post('/genPdfCompromiso', [ImpresionController::class, 'genPdfCompromiso']);
+    Route::post('/genPdfRecurso', [ImpresionController::class, 'genPdfRecurso']);
 });

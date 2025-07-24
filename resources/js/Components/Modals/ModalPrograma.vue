@@ -31,8 +31,8 @@
             <!-- Contenedor con scroll oculto -->
             <div class="scroll-contenedor" v-else>
               <div class="row">
-                <div v-if="sesiones.length != 0">
-                  <div @click="abrirModalSesion(item)" v-for="(item, idx) in sesiones" :key="item.c_sesion"
+                <template v-if="sesiones.length">
+                  <div v-for="(item, idx) in sesiones" :key="item.c_sesion" @click="abrirModalSesion(item)"
                     class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
                     <div class="position-relative card shadow border-0 h-100">
                       <button v-if="usuario.c_rol === '1' || usuario.c_rol === '2'" @click.stop="eliminarSesion(item)"
@@ -42,20 +42,19 @@
                       <img :src="item.l_fotoSesion || defaultImage" alt="Imagen de sesión"
                         class="card-img-top img-fluid"
                         style="max-height: 150px; object-fit: cover; background-color: #f8f9fa;" />
-
                       <div class="card-body text-center">
                         <h6 class="card-title text-dark mb-1">Sesión {{ idx + 1 }}</h6>
                         <p class="mb-0 small text-muted">{{ item.l_sesion }}</p>
                       </div>
                     </div>
                   </div>
-                </div>
+                </template>
 
                 <div v-else class="text-center my-4">
                   <p class="mt-2 mb-0">No hay sesiones existentes</p>
                 </div>
-
               </div>
+
             </div>
 
           </div>
@@ -108,16 +107,20 @@ export default {
   mounted() {
     this.cargarSesiones();
 
-    axios.post('/devPermiso', {
-      c_usuario: this.usuario.c_usuario,
-      modulo: 'programas',
-      tipo: 'agregar',
-      descripcion: 'No agregar y eliminar ninguna sesión'
-    }).then(
-      r => {
-        this.q_agregarElimSesion = r.data.permiso
-      }
-    )
+    if (this.usuario.c_rol === '1') {
+      axios.post('/devPermiso', {
+        c_usuario: this.usuario.c_usuario,
+        modulo: 'programas',
+        tipo: 'agregar',
+        descripcion: 'No agregar y eliminar ninguna sesión'
+      }).then(
+        r => {
+          this.q_agregarElimSesion = r.data.permiso
+        }
+      )
+    }
+
+
 
   },
   methods: {

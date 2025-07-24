@@ -70,7 +70,7 @@ export default {
 
         axios.get('/listProgramas').then(response => {
           const todosLosProgramas = response.data.programas;
-
+          console.log("Todo los programas: ", todosLosProgramas)
           const programasPermitidos = todosLosProgramas.filter(programa => {
             return this.permisosEst.some(permiso =>
               permiso.c_programa === programa.c_programa &&

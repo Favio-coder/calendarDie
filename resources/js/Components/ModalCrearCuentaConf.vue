@@ -48,7 +48,7 @@
 
                 <div class="mb-3">
                   <label class="form-label">Rol</label>
-                  <select class="form-select" v-model.number="form.rol">
+                  <select class="form-select" v-model.number="form.rol" disabled>
                     <option disabled value="">Seleccione un rol</option>
                     <option value="1">Mentor oficial</option>
                     <option value="2">Mentor invitado</option>

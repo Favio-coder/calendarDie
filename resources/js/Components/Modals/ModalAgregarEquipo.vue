@@ -171,7 +171,7 @@ export default {
         const estudiantes = res.data.estudiantes
         this.estudiantes = estudiantes       
 
-        if (!esEdicion) return
+        // if (!esEdicion) return
 
         const mapaCarreras = new Map()
         this.carreras = estudiantes.reduce((acc, est) => {
@@ -198,6 +198,8 @@ export default {
       })
       .catch(err => console.error('Error:', err))
       .finally(() => (this.isLoading = false))
+
+      console.log("Carreras: ", this.carreras)
   },
   methods: {
     cerrarModalEquipo() {
@@ -281,7 +283,7 @@ export default {
         }
       });
     },
-     editarEquipo () {
+    editarEquipo () {
         Swal.fire({
           title: 'Mensaje',
           text:  'Se editará este equipo, ¿estás seguro?',
@@ -303,6 +305,8 @@ export default {
           const file = this.$refs.logoEquipoInput?.files[0]
           if (file) fd.append('logo', file)
 
+          console.log("Esto se va enviar: ", fd)
+
           axios.post('/editEquipo', fd, {
             headers: { 'Content-Type': 'multipart/form-data' }
           })
@@ -312,7 +316,7 @@ export default {
           })
           
         })
-      },
+    },
     abrirModalAgregarEst() {
       this.currentView = ModalAgregarEst
       this.currentProps = {

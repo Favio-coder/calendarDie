@@ -289,6 +289,8 @@ export default {
                 'Content-Type': 'multipart/form-data'
               }
             }).then(response => {
+              this.$emit('cargar-listaUsuarios')
+
               Swal.fire({
                 title: "Mensaje",
                 text: "Cuenta creada",

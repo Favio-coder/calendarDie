@@ -21,7 +21,7 @@ class PermisoController extends Controller
                 'c_usuario' => $request->c_usuario
             ]);
 
-
+            //dd($permisos);
 
             return response()->json([
                 'mensaje' => "Se devolvio correctamente los permisos",
